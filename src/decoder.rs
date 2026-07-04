@@ -142,6 +142,20 @@ impl Instruction {
     }
 }
 
+fn sign_immediate(instruction: u32, im_length: u32, signed: bool) -> i32 {
+
+    let base: i32 = 2;
+    let data_mask: u32 = (base.pow(im_length) - 1) as u32;
+    
+    if !signed { // unsigned, fill with zeros
+        return ((instruction >> 20) & data_mask) as i32;
+    }
+    else { // signed, cast to i32, shift up to set sign bit, finally shift down to correct value
+        let temp = ((instruction >> 20) as i32) << (32 - im_length);
+        return temp >> (32 - im_length);
+    }
+}
+
 
 fn parse_r_type(instruction: u32) -> Instruction {
     let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
@@ -220,8 +234,79 @@ fn parse_r_type(instruction: u32) -> Instruction {
 
     return parsed_i;
 }
+
 fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
-    todo!()
+    let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
+
+
+    let operation: InstructionSet;
+
+    // Most instructions use 12 bit immidiates
+    let mut im1: i32 = sign_immediate(instruction, 12, true);
+    
+
+    match major_opcode { 
+        0b0001_0011 => {
+            match func3 {
+                0b000 => operation = InstructionSet::ADDI,
+                0b001 => {
+                    operation = InstructionSet::SLLI;
+                    im1 = sign_immediate(instruction, 4, false); // 4 bit immidiate
+                }
+                0b010 => operation = InstructionSet::SLTI,
+                0b011 => operation = InstructionSet::SLTIU,
+                0b100 => operation = InstructionSet::XORI,
+                0b101 => {
+                    let func7: u8 = ((instruction & FUNC7_MASK) >> 25) as u8;
+                    match func7 {
+                        0b000_0000 => {
+                            operation = InstructionSet::SRLI;
+                            im1 = sign_immediate(instruction, 4, false); // 4 bit immidiate
+                        }
+                        0b010_0000 => {
+                            operation = InstructionSet::SRAI;
+                            im1 = sign_immediate(instruction, 4, false); // 4 bit immidiate
+                        }
+                        _ => panic!("Unrecognized func7")
+                    }
+                }
+                0b110 => operation = InstructionSet::ORI,
+                0b111 => operation = InstructionSet::ANDI,
+                _ => panic!("Unrecognized func3")
+            }
+        }
+        0b0000_0011 => {
+            match func3 {
+                0b000 => operation = InstructionSet::LB,
+                0b001 => operation = InstructionSet::LH,
+                0b010 => operation = InstructionSet::LW,
+                0b100 => operation = InstructionSet::LBU,
+                0b101 => operation = InstructionSet::LHU,
+                _ => panic!("Unrecognized func3")
+            }
+        }
+        0b0110_0111 => operation = InstructionSet::JALR,
+        0b0111_0011 => {
+            im1 = sign_immediate(instruction, 1, false);
+            if im1 == 0 {
+                operation = InstructionSet::ECALL;
+            }
+            else {
+                operation = InstructionSet::EBREAK;
+            }
+        }
+        _ => panic!("Unrecognized opcode")
+
+    }
+
+    let parsed_i = Instruction::new_i_type(
+        operation,
+        im1,
+        ((instruction >> 15) & 0b11111) as u8,
+        ((instruction >> 7) & 0b11111) as u8
+    );
+
+    return parsed_i
 }
 fn parse_s_type(instruction: u32) -> Instruction {
     todo!()
