@@ -134,24 +134,30 @@ impl Instruction {
     fn new_i_type(opcode: InstructionSet, im1: i32, rs1: u8, rd: u8) -> Self {
         Instruction { instr_type: InstrType::IType, opcode, im1, im2: 0, rs1, rs2: 0, rd }
     }
-    fn new_sb_type(opcode: InstructionSet, im1: i32, im2: i32, rs1: u8, rs2: u8) -> Self {
-        Instruction { instr_type: InstrType::SType, opcode, im1, im2, rs1, rs2, rd: 0 }
+    fn new_s_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8) -> Self {
+        Instruction { instr_type: InstrType::SType, opcode, im1, im2: 0, rs1, rs2, rd: 0 }
     }
-    fn new_uj_type(opcode: InstructionSet, im1: i32, rd: u8) -> Self {
-        Instruction { instr_type: InstrType::SType, opcode, im1, im2: 0, rs1: 0, rs2: 0, rd}
+    fn new_b_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8) -> Self {
+        Instruction { instr_type: InstrType::BType, opcode, im1, im2: 0, rs1, rs2, rd: 0 }
+    }
+    fn new_u_type(opcode: InstructionSet, im1: i32, rd: u8) -> Self {
+        Instruction { instr_type: InstrType::UType, opcode, im1, im2: 0, rs1: 0, rs2: 0, rd}
+    }
+    fn new_j_type(opcode: InstructionSet, im1: i32, rd: u8) -> Self {
+        Instruction { instr_type: InstrType::JType, opcode, im1, im2: 0, rs1: 0, rs2: 0, rd}
     }
 }
 
-fn sign_immediate(instruction: u32, im_length: u32, signed: bool) -> i32 {
+fn sign_immediate(instruction: u32, im_start: u32, im_length: u32, signed: bool) -> i32 {
 
     let base: i32 = 2;
     let data_mask: u32 = (base.pow(im_length) - 1) as u32;
     
     if !signed { // unsigned, fill with zeros
-        return ((instruction >> 20) & data_mask) as i32;
+        return ((instruction >> im_start) & data_mask) as i32;
     }
     else { // signed, cast to i32, shift up to set sign bit, finally shift down to correct value
-        let temp = ((instruction >> 20) as i32) << (32 - im_length);
+        let temp = ((instruction >> im_start) as i32) << (32 - im_length);
         return temp >> (32 - im_length);
     }
 }
@@ -242,7 +248,7 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
     let operation: InstructionSet;
 
     // Most instructions use 12 bit immidiates
-    let mut im1: i32 = sign_immediate(instruction, 12, true);
+    let mut im1: i32 = sign_immediate(instruction, 20, 12, true);
     
 
     match major_opcode { 
@@ -251,7 +257,7 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
                 0b000 => operation = InstructionSet::ADDI,
                 0b001 => {
                     operation = InstructionSet::SLLI;
-                    im1 = sign_immediate(instruction, 4, false); // 4 bit immidiate
+                    im1 = sign_immediate(instruction, 20, 4, false); // 4 bit immidiate
                 }
                 0b010 => operation = InstructionSet::SLTI,
                 0b011 => operation = InstructionSet::SLTIU,
@@ -261,11 +267,11 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
                     match func7 {
                         0b000_0000 => {
                             operation = InstructionSet::SRLI;
-                            im1 = sign_immediate(instruction, 4, false); // 4 bit immidiate
+                            im1 = sign_immediate(instruction, 20, 4, false); // 4 bit immidiate
                         }
                         0b010_0000 => {
                             operation = InstructionSet::SRAI;
-                            im1 = sign_immediate(instruction, 4, false); // 4 bit immidiate
+                            im1 = sign_immediate(instruction, 20, 4, false); // 4 bit immidiate
                         }
                         _ => panic!("Unrecognized func7")
                     }
@@ -287,7 +293,7 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
         }
         0b0110_0111 => operation = InstructionSet::JALR,
         0b0111_0011 => {
-            im1 = sign_immediate(instruction, 1, false);
+            im1 = sign_immediate(instruction, 20, 1, false);
             if im1 == 0 {
                 operation = InstructionSet::ECALL;
             }
@@ -308,9 +314,34 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
 
     return parsed_i
 }
+
 fn parse_s_type(instruction: u32) -> Instruction {
-    todo!()
+    let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
+
+    // Connect the two immidiate fields by shifting up the lower one
+    let shifted_instr = ((instruction & 0xFFF0_0000) | ((instruction << 13) & 0b111110000000));
+    let im1: i32 = sign_immediate(shifted_instr, 20, 12, true);
+
+    let operation: InstructionSet;
+
+    match func3 {
+        0b000 => operation = InstructionSet::SB,
+        0b001 => operation = InstructionSet::SH,
+        0b010 => operation = InstructionSet::SW,
+        _ => panic!("Unrecognized func3")
+
+    }
+
+    let parsed_i = Instruction::new_s_type(
+        operation,
+        im1,
+        ((instruction >> 15) & 0b11111) as u8,
+        ((instruction >> 20) & 0b11111) as u8
+    );
+
+    return parsed_i
 }
+
 fn parse_b_type(instruction: u32) -> Instruction {
     todo!()
 }
