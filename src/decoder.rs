@@ -277,6 +277,7 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
                 operation = InstructionSet::EBREAK;
             }
         }
+        0b000_1111 => operation = InstructionSet::FENCE,
         _ => panic!("Unrecognized opcode")
 
     }
@@ -319,7 +320,35 @@ fn parse_s_type(instruction: u32) -> Instruction {
 }
 
 fn parse_b_type(instruction: u32) -> Instruction {
-    todo!()
+    let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
+    
+    let operation: InstructionSet;
+
+    let bit31 = (instruction >> 31) & 0b1;
+    let bits30_25 = (instruction >> 25) & 0b111111;
+    let bits11_8 = (instruction >> 8) & 0b1111;
+    let bit7 = (instruction >> 7) & 0b1;
+    let shifted_instr = (bit31 << 12) | (bit7 << 11) | (bits30_25 << 5) | (bits11_8 << 1);
+    let im1: i32 =  sign_immediate(shifted_instr, 0, 13, true);
+
+    match func3 {
+        0b000 => operation = InstructionSet::BEQ,
+        0b001 => operation = InstructionSet::BNE,
+        0b100 => operation = InstructionSet::BLT,
+        0b101 => operation = InstructionSet::BGE,
+        0b110 => operation = InstructionSet::BLTU,
+        0b111 => operation = InstructionSet::BGEU,
+        _ => panic!("Unrecognized func3")
+    }
+
+    let parsed_i = Instruction::new_b_type(
+        operation,
+        im1,
+        ((instruction >> 15) & 0b11111) as u8,
+        ((instruction >> 20) & 0b11111) as u8
+    );
+
+    return parsed_i;
 }
 
 fn parse_u_type(instruction: u32, major_opcode: u8) -> Instruction {
@@ -350,7 +379,7 @@ pub fn decode(instruction: u32) -> Instruction {
     let major_opcode = (instruction & OPCODE_MASK) as u8;
     match major_opcode {
         0b011_0011 => return parse_r_type(instruction),
-        0b001_0011 | 0b0000_0011 | 0b0110_0111 | 0b0111_0011 => return parse_i_type(instruction, major_opcode),
+        0b001_0011 | 0b0000_0011 | 0b0110_0111 | 0b0111_0011 | 0b000_1111 => return parse_i_type(instruction, major_opcode),
         0b010_0011 => return parse_s_type(instruction),
         0b110_0011 => return parse_b_type(instruction),
         0b110_1111 => return parse_j_type(instruction),
