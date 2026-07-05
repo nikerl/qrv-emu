@@ -86,6 +86,7 @@ pub enum InstrType {
     BType,
     UType,
     JType,
+    MMType,
 }
 
 
@@ -94,6 +95,7 @@ const FUNC3_MASK: u32  = 0b0000_0000_0000_0000_0111_0000_0000_0000;
 const FUNC7_MASK: u32  = 0b1111_1110_0000_0000_0000_0000_0000_0000;
 
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct Instruction {
     instr_type: InstrType,
@@ -103,25 +105,31 @@ pub struct Instruction {
     rs1: u8,
     rs2: u8,
     rd: u8,
+    ms1: u8,
+    ms2: u8,
+    md: u8
 }
 impl Instruction {
     fn new_r_type(opcode: InstructionSet, rs1: u8, rs2: u8, rd: u8) -> Self {
-        Instruction { instr_type: InstrType::RType, opcode, im1: 0, im2: 0, rs1, rs2, rd }
+        Instruction { instr_type: InstrType::RType, opcode, im1: 0, im2: 0, rs1, rs2, rd, ms1: 0, ms2: 0, md: 0 }
     }
     fn new_i_type(opcode: InstructionSet, im1: i32, rs1: u8, rd: u8) -> Self {
-        Instruction { instr_type: InstrType::IType, opcode, im1, im2: 0, rs1, rs2: 0, rd }
+        Instruction { instr_type: InstrType::IType, opcode, im1, im2: 0, rs1, rs2: 0, rd, ms1: 0, ms2: 0, md: 0 }
     }
     fn new_s_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8) -> Self {
-        Instruction { instr_type: InstrType::SType, opcode, im1, im2: 0, rs1, rs2, rd: 0 }
+        Instruction { instr_type: InstrType::SType, opcode, im1, im2: 0, rs1, rs2, rd: 0, ms1: 0, ms2: 0, md: 0 }
     }
     fn new_b_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8) -> Self {
-        Instruction { instr_type: InstrType::BType, opcode, im1, im2: 0, rs1, rs2, rd: 0 }
+        Instruction { instr_type: InstrType::BType, opcode, im1, im2: 0, rs1, rs2, rd: 0, ms1: 0, ms2: 0, md: 0 }
     }
     fn new_u_type(opcode: InstructionSet, im1: i32, rd: u8) -> Self {
-        Instruction { instr_type: InstrType::UType, opcode, im1, im2: 0, rs1: 0, rs2: 0, rd}
+        Instruction { instr_type: InstrType::UType, opcode, im1, im2: 0, rs1: 0, ms2: 0, rd, rs2: 0, ms1: 0, md: 0}
     }
     fn new_j_type(opcode: InstructionSet, im1: i32, rd: u8) -> Self {
-        Instruction { instr_type: InstrType::JType, opcode, im1, im2: 0, rs1: 0, rs2: 0, rd}
+        Instruction { instr_type: InstrType::JType, opcode, im1, im2: 0, rs1: 0, ms2: 0, rd, rs2: 0, ms1: 0, md: 0}
+    }
+    fn new_mm_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8, ms1: u8, ms2: u8, md: u8) -> Self {
+        Instruction { instr_type: InstrType::MMType, opcode, im1, im2: 0, rs1, rs2, rd: 0, ms1, ms2, md}
     }
 }
 
@@ -152,35 +160,35 @@ fn parse_r_type(instruction: u32) -> Instruction {
                 0b000_0000 => operation = InstructionSet::ADD,
                 0b010_0000 => operation = InstructionSet::SUB,
                 0b000_0001 => operation = InstructionSet::MUL,
-                _ => panic!("Unrecognized func7") // fix more graceful exception
+                _ => panic!("Unrecognized func7")
             }
         }
         0b001 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::SLL,
                 0b000_0001 => operation = InstructionSet::MULH,
-                _ => panic!("Unrecognized func7") // fix more graceful exception
+                _ => panic!("Unrecognized func7")
             }
         }
         0b010 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::SLT,
                 0b000_0001 => operation = InstructionSet::MULHSU,
-                _ => panic!("Unrecognized func7") // fix more graceful exception
+                _ => panic!("Unrecognized func7")
             }
         }
         0b011 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::SLTU,
                 0b000_0001 => operation = InstructionSet::MULHU,
-                _ => panic!("Unrecognized func7") // fix more graceful exception
+                _ => panic!("Unrecognized func7")
             }
         }
         0b100 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::XOR,
                 0b000_0001 => operation = InstructionSet::DIV,
-                _ => panic!("Unrecognized func7") // fix more graceful exception
+                _ => panic!("Unrecognized func7")
             }
         }
         0b101 => {
@@ -188,24 +196,24 @@ fn parse_r_type(instruction: u32) -> Instruction {
                 0b000_0000 => operation = InstructionSet::SRL,
                 0b010_0000 => operation = InstructionSet::SRA,
                 0b000_0001 => operation = InstructionSet::DIVU,
-                _ => panic!("Unrecognized func7") // fix more graceful exception
+                _ => panic!("Unrecognized func7")
             }
         }
         0b110 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::OR,
                 0b000_0001 => operation = InstructionSet::REM,
-                _ => panic!("Unrecognized func7") // fix more graceful exception
+                _ => panic!("Unrecognized func7")
             }
         }
         0b111 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::AND,
                 0b000_0001 => operation = InstructionSet::REMU,
-                _ => panic!("Unrecognized func7") // fix more graceful exception
+                _ => panic!("Unrecognized func7")
             }
         }
-        _ => panic!("Unrecognized func3") // fix more graceful exception
+        _ => panic!("Unrecognized func3")
     }
 
     let parsed_i = Instruction::new_r_type(
@@ -390,6 +398,68 @@ fn parse_j_type(instruction: u32) -> Instruction {
     return parsed_i;
 }
 
+fn parse_mm_type(instruction: u32) -> Instruction {
+    let func7: u8 = ((instruction & FUNC7_MASK) >> 25) as u8;
+
+    let operation: InstructionSet;
+    let mut im1: i32 = 0;
+    let mut rs1: u8 = 0;
+    let mut rs2: u8 = 0;
+    let mut ms1: u8 = 0;
+    let mut ms2: u8 = 0;
+    let mut md: u8 = 0;
+
+    match func7 {
+        0b11110 => {
+            operation = InstructionSet::MMASAW;
+            ms1 = ((instruction >> 18) & 0b111) as u8;
+            ms2 = ((instruction >> 21) & 0b111) as u8;
+            md = ((instruction >> 15) & 0b111) as u8
+        }
+        0b01000 => {
+            operation = InstructionSet::SPMACW;
+            ms1 = ((instruction >> 18) & 0b111) as u8;
+            ms2 = ((instruction >> 21) & 0b111) as u8;
+            md = ((instruction >> 15) & 0b111) as u8
+        }
+        0b11111 => {
+            operation = InstructionSet::MZERO;
+            md = ((instruction >> 15) & 0b111) as u8
+        }
+        0b00000 => {
+            operation = InstructionSet::MLDW;
+            rs2 = ((instruction >> 20) & 0b11111) as u8;
+            rs1 = ((instruction >> 15) & 0b11111) as u8;
+            md = ((instruction >> 7) & 0b111) as u8
+        }
+        0b00001 => {
+            operation = InstructionSet::MSTW;
+            rs2 = ((instruction >> 20) & 0b11111) as u8;
+            rs1 = ((instruction >> 15) & 0b11111) as u8;
+            ms1 = ((instruction >> 7) & 0b111) as u8
+        }
+        0b00100 => {
+            operation = InstructionSet::SPLDW;
+            im1 = ((instruction >> 15) & 0b111) as i32;
+            rs2 = 10;
+            rs1 = 11;
+            md = ((instruction >> 7) & 0b111) as u8
+        }
+        0b00010 => {
+            operation = InstructionSet::DLDW;
+            rs2 = 10;
+            rs1 = 11;
+            ms1 = ((instruction >> 15) & 0b111) as u8;
+            md = ((instruction >> 7) & 0b111) as u8
+        }
+        _ => panic!("Unrecognized func7")
+    }
+
+    let parsed_i = Instruction::new_mm_type(operation, im1, rs1, rs2, ms1, ms2, md);
+
+    return parsed_i;
+}
+
 pub fn decode(instruction: u32) -> Instruction {
     let major_opcode = (instruction & OPCODE_MASK) as u8;
     match major_opcode {
@@ -399,6 +469,7 @@ pub fn decode(instruction: u32) -> Instruction {
         0b110_0011 => return parse_b_type(instruction),
         0b110_1111 => return parse_j_type(instruction),
         0b011_0111 | 0b001_0111 => return parse_u_type(instruction, major_opcode),
+        0b010_1011 => return parse_mm_type(instruction),
         _ => panic!("Unrecognized opcode") // fix more graceful exception
     }
 }
