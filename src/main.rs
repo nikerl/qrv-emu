@@ -1,10 +1,19 @@
 
 mod decoder;
+mod registerfile;
+pub use registerfile::RegisterFile;
 
 fn main() {
+    let mut rf = RegisterFile::new();
 
     // example: ADD a11, a12, a13
     let instruction: decoder::Instruction = decoder::decode(0b0000_0000_1101_0110_0000_0101_1011_0011);
 
     println!("instruction fetched: {:#?}", instruction);
+
+    rf[1] = 42;
+    rf.set_sp(0x1234_ABCD); 
+    rf.pc = 10;
+    println!("rf: \n{}", rf);
+
 }
