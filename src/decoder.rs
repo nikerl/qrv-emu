@@ -23,14 +23,6 @@ pub enum InstructionSet {
     SLTI, //set less than imm
     SLTIU, //set less than imm (u)
 
-    // instructions
-    LI, //load immediate
-    LA, //load address
-
-    MV, //move (copy)
-    NEG, //2s-complement negation
-    NOT, //bitwise not
-
     // Load instructions
     LB, //load byte
     LH, //load half
@@ -54,9 +46,6 @@ pub enum InstructionSet {
     // Jump instructions
     JAL, //jump and link
     JALR, //jump and link reg
-    J, //jump
-    CALL, //call subroutine
-    RET, //return
 
     // Upper immediate
     LUI, //load upper imm
@@ -66,7 +55,6 @@ pub enum InstructionSet {
     ECALL, //environment call
     EBREAK, //environment break
     FENCE, //fence
-    PAUSE, //pause
     
     // Multiply extension
     MUL, //multiply
@@ -233,7 +221,6 @@ fn parse_r_type(instruction: u32) -> Instruction {
 fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
     let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
 
-
     let operation: InstructionSet;
 
     // Most instructions use 12 bit immidiates
@@ -308,7 +295,7 @@ fn parse_s_type(instruction: u32) -> Instruction {
     let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
 
     // Connect the two immidiate fields by shifting up the lower one
-    let shifted_instr = ((instruction & 0xFFF0_0000) | ((instruction << 13) & 0b111110000000));
+    let shifted_instr = (instruction & 0xFFF0_0000) | ((instruction << 13) & 0b111110000000);
     let im1: i32 = sign_immediate(shifted_instr, 20, 12, true);
 
     let operation: InstructionSet;
@@ -334,9 +321,27 @@ fn parse_s_type(instruction: u32) -> Instruction {
 fn parse_b_type(instruction: u32) -> Instruction {
     todo!()
 }
-fn parse_u_type(instruction: u32) -> Instruction {
-    todo!()
+
+fn parse_u_type(instruction: u32, major_opcode: u8) -> Instruction {
+    let operation: InstructionSet;
+
+    let im1: i32 = (instruction & 0xFFFF_F000) as i32;
+
+    match major_opcode {
+        0b011_0111 => operation = InstructionSet::LUI,
+        0b001_0111 => operation = InstructionSet::AUIPC,
+        _ => panic!("Unrecognized opcode")
+    }
+
+    let parsed_i = Instruction::new_u_type(
+        operation,
+        im1,
+        ((instruction >> 7) & 0b11111) as u8
+    );
+
+    return parsed_i;
 }
+
 fn parse_j_type(instruction: u32) -> Instruction {
     todo!()
 }
@@ -344,12 +349,12 @@ fn parse_j_type(instruction: u32) -> Instruction {
 pub fn decode(instruction: u32) -> Instruction {
     let major_opcode = (instruction & OPCODE_MASK) as u8;
     match major_opcode {
-        0b0011_0011 => return parse_r_type(instruction),
-        0b0001_0011 | 0b0000_0011 | 0b0110_0111 | 0b0111_0011 => return parse_i_type(instruction, major_opcode),
-        0b0010_0011 => return parse_s_type(instruction),
-        0b0110_0011 => return parse_b_type(instruction),
-        0b0110_1111 => return parse_j_type(instruction),
-        0b0011_0111 => return parse_u_type(instruction),
+        0b011_0011 => return parse_r_type(instruction),
+        0b001_0011 | 0b0000_0011 | 0b0110_0111 | 0b0111_0011 => return parse_i_type(instruction, major_opcode),
+        0b010_0011 => return parse_s_type(instruction),
+        0b110_0011 => return parse_b_type(instruction),
+        0b110_1111 => return parse_j_type(instruction),
+        0b011_0111 | 0b001_0111 => return parse_u_type(instruction, major_opcode),
         _ => panic!("Unrecognized opcode") // fix more graceful exception
     }
 }
