@@ -47,21 +47,9 @@ pub enum InstructionSet {
     BEQ, //branch if $=$
     BNE, //branch if $≠$
     BLT, //branch if $<$
-    BLE, //branch if $≤$
-    BGT, //branch if $>$
     BGE, //branch if $≥$
     BLTU, //branch if $<$ (u)
-    BLEU, //branch if $≤$ (u)
-    BGTU, //branch if $>$ (u)
     BGEU, //branch if $≥$ (u)
-
-    // Branch zero instructions
-    BEQZ, //branch if $= 0$
-    BNEZ, //branch if $≠ 0$
-    BLTZ, //branch if $< 0$
-    BLEZ, //branch if $≤ 0$
-    BGTZ, //branch if $> 0$
-    BGEZ, //branch if $≥ 0$
 
     // Jump instructions
     JAL, //jump and link
@@ -78,6 +66,7 @@ pub enum InstructionSet {
     ECALL, //environment call
     EBREAK, //environment break
     FENCE, //fence
+    PAUSE, //pause
     
     // Multiply extension
     MUL, //multiply
