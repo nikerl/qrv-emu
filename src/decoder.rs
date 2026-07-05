@@ -371,8 +371,23 @@ fn parse_u_type(instruction: u32, major_opcode: u8) -> Instruction {
     return parsed_i;
 }
 
-fn parse_j_type(instruction: u32) -> Instruction {
-    todo!()
+fn parse_j_type(instruction: u32) -> Instruction {    
+    let operation= InstructionSet::JAL;
+
+    let bit31 = (instruction >> 31) & 0b1;
+    let bits30_21 = (instruction >> 21) & 0b1111111111;
+    let bit20 = (instruction >> 20) & 0b1;
+    let bits19_12 = (instruction >> 12) & 0b11111111;
+    let shifted_instr = (bit31 << 20) | (bit20 << 11) | (bits30_21 << 1) | (bits19_12 << 12);
+    let im1: i32 =  sign_immediate(shifted_instr, 0, 20, true);
+    
+    let parsed_i = Instruction::new_j_type(
+        operation, 
+        im1,
+        ((instruction >> 7) & 0b11111) as u8
+    );
+
+    return parsed_i;
 }
 
 pub fn decode(instruction: u32) -> Instruction {
