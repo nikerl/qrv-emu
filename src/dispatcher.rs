@@ -24,7 +24,7 @@ use crate::{
 
 pub fn dispatch(instruction: Instruction, srf: &mut ScalarRF, mrf: &mut MatrixRF, mem: &mut Memory) {
     match instruction.instr_type {
-        InstrType::RType => { // all to alu
+        InstrType::RType => {
             Alu::execute(instruction, srf, mem);
         }
         InstrType::IType => {
@@ -36,16 +36,16 @@ pub fn dispatch(instruction: Instruction, srf: &mut ScalarRF, mrf: &mut MatrixRF
                 _ => println!("Unrecognized opcode")
             }
         }
-        InstrType::SType => { // all to lsu
+        InstrType::SType => {
             Lsu::execute(instruction, srf, mem);
         }
-        InstrType::BType => { // all to branch
+        InstrType::BType => {
             Branch::execute(instruction, srf, mem);
         }
         InstrType::UType => {
             Alu::execute(instruction, srf, mem);
         }
-        InstrType::JType => { // only JAL
+        InstrType::JType => {
             Jump::execute(instruction, srf, mem);
         }
         InstrType::MMType => {

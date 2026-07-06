@@ -1,4 +1,4 @@
-use std::{fmt, ops::{Index, IndexMut}};
+use std::{ops::{Index, IndexMut}};
 
 const MEM_SIZE: usize = 0x000_FFFF; // Memory size in bytes
 
