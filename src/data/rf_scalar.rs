@@ -1,14 +1,15 @@
 use std::{fmt, ops::{Index, IndexMut}};
 
 #[derive(Debug)]
-pub struct RegisterFile {
+pub struct ScalarRF {
     rf: [u32; 32],
     pub pc: u32,
+    trap: u32, // trap queries modifying x0
 }
 
-impl RegisterFile {
+impl ScalarRF {
     pub fn new() -> Self {
-        return RegisterFile {rf: [0; 32], pc: 0};
+        return ScalarRF {rf: [0; 32], pc: 0, trap: 0};
     }
 
     pub fn zero(&self) -> u32 {
@@ -37,19 +38,20 @@ impl RegisterFile {
     }
 }
 
-impl Index<usize> for RegisterFile {
+impl Index<usize> for ScalarRF {
     type Output = u32;
     fn index(&self, i: usize) -> &u32 {
         &self.rf[i]
     }
 }
-impl IndexMut<usize> for RegisterFile {
+impl IndexMut<usize> for ScalarRF {
     fn index_mut(&mut self, i: usize) -> &mut u32 {
+        if i == 0 {return &mut self.trap}
         &mut self.rf[i]
     }
 }
 
-impl fmt::Display for RegisterFile {
+impl fmt::Display for ScalarRF {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for i in 0..32 {
             writeln!(f, "x{}: {}", i, self.rf[i])?;
