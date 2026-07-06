@@ -1,10 +1,11 @@
 
 mod decoder;
 mod data;
-use data::{rf_scalar::ScalarRF, rf_matrix::MatrixRF};
+use data::{memory::Memory, rf_scalar::ScalarRF, rf_matrix::MatrixRF};
 
 
 fn main() {
+    let mut mem = Memory::new();
     let mut rf = ScalarRF::new();
     let mut mrf = MatrixRF::new();
 
@@ -17,6 +18,9 @@ fn main() {
     rf.set_sp(0x1234_ABCD); 
     rf.pc = 10;
     println!("rf: \n{}", rf);
+
+    mem[0x000_010c] = 1337;
+    println!("mem:\n{}", mem.examine(0x000_0100, 8));
 
     mrf[2][0][3] = 420;
     println!("mrf:\n{}", mrf);
