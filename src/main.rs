@@ -1,7 +1,9 @@
 
 mod decoder;
+mod dispatcher;
 mod data;
 use data::{memory::Memory, rf_scalar::ScalarRF, rf_matrix::MatrixRF};
+mod exec;
 
 
 fn main() {

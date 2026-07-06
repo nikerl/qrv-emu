@@ -98,16 +98,16 @@ const FUNC7_MASK: u32  = 0b1111_1110_0000_0000_0000_0000_0000_0000;
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct Instruction {
-    instr_type: InstrType,
-    opcode: InstructionSet,
-    im1: i32,
-    im2: i32,
-    rs1: u8,
-    rs2: u8,
-    rd: u8,
-    ms1: u8,
-    ms2: u8,
-    md: u8
+    pub instr_type: InstrType,
+    pub opcode: InstructionSet,
+    pub im1: i32,
+    pub im2: i32,
+    pub rs1: u8,
+    pub rs2: u8,
+    pub rd: u8,
+    pub ms1: u8,
+    pub ms2: u8,
+    pub md: u8
 }
 impl Instruction {
     fn new_r_type(opcode: InstructionSet, rs1: u8, rs2: u8, rd: u8) -> Self {
