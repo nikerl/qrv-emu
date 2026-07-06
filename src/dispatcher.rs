@@ -4,10 +4,10 @@ use crate::{
         rf_matrix::MatrixRF, 
         rf_scalar::ScalarRF
     }, 
-    decoder::{
+    instruction_set::{
         InstrType, 
         Instruction,
-        InstructionSet
+        InstructionSet::*
     }, 
     exec::{
         ScalarFU, 
@@ -29,13 +29,10 @@ pub fn dispatch(instruction: Instruction, srf: &mut ScalarRF, mrf: &mut MatrixRF
         }
         InstrType::IType => {
             match instruction.opcode {
-                InstructionSet::ADDI | InstructionSet::XORI | InstructionSet::ORI 
-                    | InstructionSet::ANDI | InstructionSet::SLLI | InstructionSet::SRLI 
-                    | InstructionSet::SRAI | InstructionSet::SLTI | InstructionSet::SLTIU => Alu::execute(instruction, srf, mem),
-                InstructionSet::LB | InstructionSet::LH | InstructionSet::LW 
-                    | InstructionSet::LBU | InstructionSet::LHU => Lsu::execute(instruction, srf, mem),
-                InstructionSet::JALR => Jump::execute(instruction, srf, mem),
-                InstructionSet::ECALL | InstructionSet::EBREAK | InstructionSet::FENCE => Sys::execute(instruction, srf, mem),
+                ADDI | XORI | ORI | ANDI | SLLI | SRLI | SRAI | SLTI | SLTIU => Alu::execute(instruction, srf, mem),
+                LB | LH | LW | LBU | LHU => Lsu::execute(instruction, srf, mem),
+                JALR => Jump::execute(instruction, srf, mem),
+                ECALL | EBREAK | FENCE => Sys::execute(instruction, srf, mem),
                 _ => println!("Unrecognized opcode")
             }
         }
@@ -53,9 +50,8 @@ pub fn dispatch(instruction: Instruction, srf: &mut ScalarRF, mrf: &mut MatrixRF
         }
         InstrType::MMType => {
             match instruction.opcode {
-                InstructionSet::MMASAW | InstructionSet::SPMACW => MatrixMultiply::execute(instruction, srf, mrf, mem),
-                InstructionSet::MZERO | InstructionSet::MLDW | InstructionSet::MSTW 
-                    | InstructionSet::SPLDW | InstructionSet::DLDW => MatrixLSU::execute(instruction, srf, mrf, mem),
+                MMASAW | SPMACW => MatrixMultiply::execute(instruction, srf, mrf, mem),
+                MZERO | MLDW | MSTW | SPLDW | DLDW => MatrixLSU::execute(instruction, srf, mrf, mem),
                 _ => println!("Unrecognized opcode")
             }
         }

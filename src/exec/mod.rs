@@ -1,4 +1,4 @@
-use crate::{data::{memory::Memory, rf_scalar::ScalarRF, rf_matrix::MatrixRF}, decoder::Instruction};
+use crate::{data::{memory::Memory, rf_scalar::ScalarRF, rf_matrix::MatrixRF}, instruction_set::Instruction};
 
 pub mod alu;
 pub mod jump;
