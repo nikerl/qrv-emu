@@ -7,7 +7,6 @@ mod instruction_set;
 use instruction_set::Instruction;
 
 
-
 fn main() {
     let mut mem = Memory::new();
     let mut rf = ScalarRF::new();
@@ -29,8 +28,12 @@ fn main() {
     rf.pc = 10;
     println!("rf: \n{}", rf);
 
-    mem[0x000_010c] = 1337;
+    mem.store_word(0x000_010c, 1337);
     println!("mem:\n{}", mem.examine(0x000_0100, 8));
+
+    let test = mem.load_word(0x000_010c);
+
+    println!("test: {}", test);
 
     mrf[2][0][3] = 420;
     println!("mrf:\n{}", mrf);

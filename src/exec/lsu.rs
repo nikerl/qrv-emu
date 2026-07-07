@@ -1,10 +1,33 @@
-use crate::{data::{memory::Memory, rf_scalar::ScalarRF}, instruction_set::Instruction, exec::ScalarFU};
+use crate::{
+    data::{
+        memory::Memory, 
+        rf_scalar::ScalarRF
+    }, 
+    instruction_set::{
+        Instruction, 
+        InstructionSet::*
+    }, 
+    exec::ScalarFU
+};
 
 pub struct Lsu;
 
-// LB, LH, LW, LBU, LHU, SB, SH, SW
 impl ScalarFU for Lsu {
     fn execute(instr: Instruction, regs: &mut ScalarRF, mem: &mut Memory) {
-        todo!()
+        let rd = instr.rd as usize;
+        let addr = (regs[instr.rs1 as usize] + instr.im1 as u32) as usize;
+        let val = regs[instr.rs2 as usize];
+        
+        match instr.opcode {
+            LB => regs[rd] = mem.load_byte(addr) as i8 as i32 as u32,
+            LH => regs[rd] = mem.load_half(addr) as i16 as i32 as u32,
+            LW => regs[rd] = mem.load_word(addr) as i32 as u32,
+            LBU => regs[rd] = mem.load_byte(addr) as u32,
+            LHU => regs[rd] = mem.load_half(addr) as u32,
+            SB => mem.store_byte(addr, val as u8),
+            SH => mem.store_half(addr, val as u16),
+            SW => mem.store_word(addr, val as u32),
+            _ => println!("Unrecognized opcode")
+        }
     }
 }
