@@ -34,7 +34,7 @@ impl ScalarRF {
         self.rf[3] = new_ra;
     }
     pub fn inc_pc(&mut self) {
-        self.pc += 4;
+        self.pc = self.pc.wrapping_add(4);
     }
 }
 
