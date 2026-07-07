@@ -1,7 +1,7 @@
 use crate::{
     data::{
         memory::Memory, 
-        rf_scalar::ScalarRF
+        rf_scalar::{ScalarRF, RegNames::*}
     }, 
     instruction_set::{
         Instruction, 
@@ -83,7 +83,7 @@ impl ScalarFU for Alu {
             SLTI => if (regs[rs1] as i32) < im1 {regs[rd] = 1} else {regs[rd] = 0},
             SLTIU => if regs[rs1] < (im1 as u32) {regs[rd] = 1} else {regs[rd] = 0},
             LUI => regs[rd] = im1 as u32,
-            AUIPC => regs[rd] = regs.pc.wrapping_add(im1 as u32),
+            AUIPC => regs[rd] = regs[PC].wrapping_add(im1 as u32),
             _ => println!("Unrecognized opcode")
         }
     }

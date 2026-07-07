@@ -1,9 +1,21 @@
 use std::{fmt, ops::{Index, IndexMut}};
+use RegNames::*;
+
+#[allow(dead_code)]
+pub enum RegNames {
+    ZERO = 0,
+    RA = 1,
+    SP = 2,
+    GP = 3,
+    TP = 4,
+    PC = 32,
+}
+
 
 #[derive(Debug)]
 pub struct ScalarRF {
     rf: [u32; 32],
-    pub pc: u32,
+    pc: u32,
     trap: u32, // trap queries modifying x0
 }
 
@@ -11,43 +23,44 @@ impl ScalarRF {
     pub fn new() -> Self {
         return ScalarRF {rf: [0; 32], pc: 0, trap: 0};
     }
-
-    pub fn zero(&self) -> u32 {
-        return self.rf[0];
-    }
-    pub fn ra(&self) -> u32 {
-        return self.rf[1];
-    }
-    pub fn set_ra(&mut self, new_ra: u32) {
-        self.rf[1] = new_ra;
-    }
-    pub fn sp(&self) -> u32 {
-        return self.rf[2];
-    }
-    pub fn set_sp(&mut self, new_ra: u32) {
-        self.rf[2] = new_ra;
-    }
-    pub fn gp(&self) -> u32 {
-        return self.rf[3];
-    }
-    pub fn set_gp(&mut self, new_ra: u32) {
-        self.rf[3] = new_ra;
-    }
-    pub fn inc_pc(&mut self) {
-        self.pc = self.pc.wrapping_add(4);
-    }
 }
 
 impl Index<usize> for ScalarRF {
     type Output = u32;
     fn index(&self, i: usize) -> &u32 {
-        &self.rf[i]
+        if i == ZERO as usize {
+            return &0
+        }
+        else if i == PC as usize {
+            return &self.pc;
+        }
+        else {
+            return &self.rf[i];
+        }
     }
 }
 impl IndexMut<usize> for ScalarRF {
     fn index_mut(&mut self, i: usize) -> &mut u32 {
-        if i == 0 {return &mut self.trap}
-        &mut self.rf[i]
+        if i == ZERO as usize {
+            return &mut self.trap
+        }
+        else if i == PC as usize {
+            return &mut self.pc;
+        }
+        else {
+            return &mut self.rf[i];
+        }
+    }
+}
+impl Index<RegNames> for ScalarRF {
+    type Output = u32;
+    fn index(&self, r: RegNames) -> &u32 {
+        &self[r as usize] // reuses existing Index<usize> impl
+    }
+}
+impl IndexMut<RegNames> for ScalarRF {
+    fn index_mut(&mut self, r: RegNames) -> &mut u32 {
+        &mut self[r as usize] // reuses existing Index<usize> impl
     }
 }
 

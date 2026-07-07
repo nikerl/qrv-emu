@@ -4,12 +4,12 @@ const MEM_SIZE: usize = 0x0000_FFFF; // Memory size in bytes
 
 pub struct Memory {
     mem: [u8; MEM_SIZE],
-    mem_size: u32,
+    pub program_break: u32
 }
 
 impl Memory {
     pub fn new() -> Self{
-        return Memory { mem: [0; MEM_SIZE], mem_size: MEM_SIZE as u32 }
+        return Memory { mem: [0; MEM_SIZE], program_break: 0 }
     }
 
     pub fn load_word(&self, addr: usize) -> u32 {
@@ -33,6 +33,10 @@ impl Memory {
     }
     pub fn store_byte(&mut self, addr: usize, byte: u8) {
         self.mem[addr] = byte as u8;
+    }
+
+    pub fn len(&self) -> u32 {
+        return MEM_SIZE as u32;
     }
 
     pub fn examine(&self, location: u32, num_words: u32) -> String{

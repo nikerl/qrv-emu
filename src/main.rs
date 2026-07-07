@@ -1,7 +1,7 @@
 mod decoder;
 mod dispatcher;
 mod data;
-use data::{memory::Memory, rf_scalar::ScalarRF, rf_matrix::MatrixRF};
+use data::{memory::Memory, rf_scalar::{ScalarRF, RegNames::*}, rf_matrix::MatrixRF};
 mod exec;
 mod instruction_set;
 use instruction_set::Instruction;
@@ -24,8 +24,9 @@ fn main() {
     println!("add instr result: {} + {} = {}", rf[12], rf[13], rf[11]);
 
     rf[1] = 42;
-    rf.set_sp(0x1234_ABCD); 
-    rf.pc = 10;
+    rf[SP] = 0x1234_ABCD; 
+    rf[PC] = 10;
+    rf[SP] = 0x0000_00FF;
     println!("rf: \n{}", rf);
 
     mem.store_word(0x000_010c, 1337);

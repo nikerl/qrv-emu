@@ -1,7 +1,7 @@
 use crate::{
     data::{
         memory::Memory, 
-        rf_scalar::ScalarRF
+        rf_scalar::{ScalarRF, RegNames::*}
     }, 
     instruction_set::{
         Instruction, 
@@ -21,12 +21,12 @@ impl ScalarFU for Jump {
 
         match instr.opcode {
             JAL => {
-                regs[rd] = regs.pc.wrapping_add(4);
-                regs.pc = (regs.pc as i32).wrapping_add(offset) as u32;
+                regs[rd] = regs[PC].wrapping_add(4);
+                regs[PC] = (regs[PC] as i32).wrapping_add(offset) as u32;
             }
             JALR => {
-                regs[rd] = regs.pc.wrapping_add(4);
-                regs.pc = ((regs[rs1] as i32).wrapping_add(offset) as u32) & !1;
+                regs[rd] = regs[PC].wrapping_add(4);
+                regs[PC] = ((regs[rs1] as i32).wrapping_add(offset) as u32) & !1;
             }
             _ => println!("Unrecognized opcode")
         }
