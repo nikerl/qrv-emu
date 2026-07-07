@@ -10,12 +10,10 @@ use crate::{
     exec::ScalarFU
 };
 
-
 pub struct Branch;
 
-// BEQ, BNE, BLT, BGE, BLTU, BGEU
 impl ScalarFU for Branch {
-    fn execute(instr: Instruction, regs: &mut ScalarRF, mem: &mut Memory) {
+    fn execute(instr: Instruction, regs: &mut ScalarRF, _mem: &mut Memory) {
         let offset = instr.im1;
         let rs1 = instr.rs1 as usize;
         let rs2 = instr.rs2 as usize;
