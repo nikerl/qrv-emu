@@ -1,4 +1,5 @@
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum InstructionSet {
     // R-type arithmetic
     ADD, //add
@@ -79,6 +80,7 @@ pub enum InstructionSet {
 }
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum InstrType {
     RType,
     IType,
@@ -91,6 +93,7 @@ pub enum InstrType {
 
 #[allow(dead_code)]
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct Instruction {
     pub instr_type: InstrType,
     pub opcode: InstructionSet,
