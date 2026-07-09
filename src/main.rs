@@ -29,9 +29,7 @@ fn main() {
 
     loop {
         let instruction: Instruction = decode(mem.load_word(srf[PC] as usize));
-        //println!("{:?}\n{:#b}\n{:#x}", instruction, mem.load_word(srf[PC] as usize), srf[PC]);
         let branch_taken: bool = dispatch(instruction, &mut srf, &mut mrf, &mut mem);
-        //println!("reg 10: {}, reg 14: {}, sp: {}", srf[10], srf[14], srf[SP]);
 
         if !branch_taken {
             srf.inc_pc();
