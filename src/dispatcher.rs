@@ -1,3 +1,5 @@
+use std::process::exit;
+
 use crate::{
     data::{
         memory::Memory, 
@@ -22,37 +24,39 @@ use crate::{
     }
 };
 
-pub fn dispatch(instruction: Instruction, srf: &mut ScalarRF, mrf: &mut MatrixRF, mem: &mut Memory) {
+
+/// Returns bool: branch taken (true), or not taken (false)
+pub fn dispatch(instruction: Instruction, srf: &mut ScalarRF, mrf: &mut MatrixRF, mem: &mut Memory) -> bool {
     match instruction.instr_type {
         InstrType::RType => {
-            Alu::execute(instruction, srf, mem);
+            return Alu::execute(instruction, srf, mem);
         }
         InstrType::IType => {
             match instruction.opcode {
-                ADDI | XORI | ORI | ANDI | SLLI | SRLI | SRAI | SLTI | SLTIU => Alu::execute(instruction, srf, mem),
-                LB | LH | LW | LBU | LHU => Lsu::execute(instruction, srf, mem),
-                JALR => Jump::execute(instruction, srf, mem),
-                ECALL | EBREAK | FENCE => Sys::execute(instruction, srf, mem),
-                _ => println!("Unrecognized opcode")
+                ADDI | XORI | ORI | ANDI | SLLI | SRLI | SRAI | SLTI | SLTIU => return Alu::execute(instruction, srf, mem),
+                LB | LH | LW | LBU | LHU => return Lsu::execute(instruction, srf, mem),
+                JALR => return Jump::execute(instruction, srf, mem),
+                ECALL | EBREAK | FENCE => return Sys::execute(instruction, srf, mem),
+                _ => {println!("Unrecognized opcode"); exit(1)}
             }
         }
         InstrType::SType => {
-            Lsu::execute(instruction, srf, mem);
+            return Lsu::execute(instruction, srf, mem);
         }
         InstrType::BType => {
-            Branch::execute(instruction, srf, mem);
+            return Branch::execute(instruction, srf, mem);
         }
         InstrType::UType => {
-            Alu::execute(instruction, srf, mem);
+            return Alu::execute(instruction, srf, mem);
         }
         InstrType::JType => {
-            Jump::execute(instruction, srf, mem);
+            return Jump::execute(instruction, srf, mem);
         }
         InstrType::MMType => {
             match instruction.opcode {
-                MMASAW | SPMACW => MatrixMultiply::execute(instruction, srf, mrf, mem),
-                MZERO | MLDW | MSTW | SPLDW | DLDW => MatrixLSU::execute(instruction, srf, mrf, mem),
-                _ => println!("Unrecognized opcode")
+                MMASAW | SPMACW => return MatrixMultiply::execute(instruction, srf, mrf, mem),
+                MZERO | MLDW | MSTW | SPLDW | DLDW => return MatrixLSU::execute(instruction, srf, mrf, mem),
+                _ => {println!("Unrecognized opcode"); exit(1)}
             }
         }
     }

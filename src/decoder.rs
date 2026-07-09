@@ -118,7 +118,7 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
                 0b000 => operation = InstructionSet::ADDI,
                 0b001 => {
                     operation = InstructionSet::SLLI;
-                    im1 = sign_immediate(instruction, 20, 4, false); // 4 bit immidiate
+                    im1 = sign_immediate(instruction, 20, 5, false); // 5 bit immidiate
                 }
                 0b010 => operation = InstructionSet::SLTI,
                 0b011 => operation = InstructionSet::SLTIU,
@@ -128,11 +128,11 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
                     match func7 {
                         0b000_0000 => {
                             operation = InstructionSet::SRLI;
-                            im1 = sign_immediate(instruction, 20, 4, false); // 4 bit immidiate
+                            im1 = sign_immediate(instruction, 20, 5, false); // 5 bit immidiate
                         }
                         0b010_0000 => {
                             operation = InstructionSet::SRAI;
-                            im1 = sign_immediate(instruction, 20, 4, false); // 4 bit immidiate
+                            im1 = sign_immediate(instruction, 20, 5, false); // 5 bit immidiate
                         }
                         _ => panic!("Unrecognized func7")
                     }
@@ -181,7 +181,7 @@ fn parse_s_type(instruction: u32) -> Instruction {
     let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
 
     // Connect the two immidiate fields by shifting up the lower one
-    let shifted_instr = (instruction & 0xFFF0_0000) | ((instruction << 13) & 0b111110000000);
+    let shifted_instr = (instruction & 0xFE00_0000) | ((instruction << 13) & 0x01F0_0000);
     let im1: i32 = sign_immediate(shifted_instr, 20, 12, true);
 
     let operation: InstructionSet;

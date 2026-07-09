@@ -1,19 +1,19 @@
 use std::{ops::{Index, IndexMut}};
 
-const MEM_SIZE: usize = 0x0000_FFFF; // Memory size in bytes
+const MEM_SIZE: usize = 0x004F_FFFF; // Memory size in bytes
 
 pub struct Memory {
-    mem: [u8; MEM_SIZE],
+    mem: Vec<u8>,
     pub program_break: u32,
     pub base_addr: u32,
 }
 
 impl Memory {
     pub fn new() -> Self{
-        return Memory { mem: [0; MEM_SIZE], program_break: 0, base_addr: 0 }
+        return Memory { mem: vec![0; MEM_SIZE], program_break: 0, base_addr: 0 }
     }
 
-    fn translate_vaddr(&self, vaddr: usize) -> usize {
+    pub fn translate_vaddr(&self, vaddr: usize) -> usize {
         let addr: usize = ((vaddr as u32) - self.base_addr) as usize;
         if addr >= MEM_SIZE {
             panic!("Memory access out of bounds: vaddr {:#x} (translated {:#x})", vaddr, addr);

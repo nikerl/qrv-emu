@@ -23,6 +23,10 @@ impl ScalarRF {
     pub fn new() -> Self {
         return ScalarRF {rf: [0; 32], pc: 0, trap: 0};
     }
+    
+    pub fn inc_pc(&mut self) {
+        self.pc += 4;
+    }
 }
 
 impl Index<usize> for ScalarRF {

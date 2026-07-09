@@ -13,8 +13,8 @@ use crate::{
 pub struct Alu;
 
 impl ScalarFU for Alu {
-    fn execute(instr: Instruction, regs: &mut ScalarRF, _mem: &mut Memory) {
-        println!("instruction dispatched to alu: {:#?}", instr);
+    fn execute(instr: Instruction, regs: &mut ScalarRF, _mem: &mut Memory) -> bool {
+        //println!("instruction dispatched to alu: {:#?}", instr);
 
         let im1 = instr.im1;
         let rs1 = instr.rs1 as usize;
@@ -86,5 +86,7 @@ impl ScalarFU for Alu {
             AUIPC => regs[rd] = regs[PC].wrapping_add(im1 as u32),
             _ => println!("Unrecognized opcode")
         }
+        
+        return false;
     }
 }

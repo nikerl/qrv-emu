@@ -13,9 +13,9 @@ use crate::{
 pub struct Lsu;
 
 impl ScalarFU for Lsu {
-    fn execute(instr: Instruction, regs: &mut ScalarRF, mem: &mut Memory) {
+    fn execute(instr: Instruction, regs: &mut ScalarRF, mem: &mut Memory) -> bool {
         let rd = instr.rd as usize;
-        let addr = (regs[instr.rs1 as usize] + instr.im1 as u32) as usize;
+        let addr = (regs[instr.rs1 as usize].wrapping_add(instr.im1 as u32)) as usize;
         let val = regs[instr.rs2 as usize];
         
         match instr.opcode {
@@ -29,5 +29,7 @@ impl ScalarFU for Lsu {
             SW => mem.store_word(addr, val as u32),
             _ => println!("Unrecognized opcode")
         }
+
+        return false;
     }
 }

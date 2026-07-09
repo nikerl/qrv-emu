@@ -15,7 +15,7 @@ use crate::{
 pub struct Sys;
 
 impl ScalarFU for Sys {
-    fn execute(instr: Instruction, regs: &mut ScalarRF, mem: &mut Memory) {
+    fn execute(instr: Instruction, regs: &mut ScalarRF, mem: &mut Memory) -> bool {
         match instr.opcode {
             ECALL => {
                 let syscall_num = regs[17];
@@ -65,8 +65,10 @@ impl ScalarFU for Sys {
                 } 
             }
             EBREAK => println!("EBREAK hit at pc {:#x}", regs[PC]),
-            FENCE => return, // not relevant 
+            FENCE => return false, // not relevant 
             _ => println!("Unrecognized opcode")
         }
+
+        return false;
     }
 }

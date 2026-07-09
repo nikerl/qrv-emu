@@ -12,9 +12,9 @@ use crate::{
 
 pub struct Jump;
 
-// JALR, JAL
+// unconditional jump, return true
 impl ScalarFU for Jump {
-    fn execute(instr: Instruction, regs: &mut ScalarRF, _mem: &mut Memory) {
+    fn execute(instr: Instruction, regs: &mut ScalarRF, _mem: &mut Memory) -> bool {
         let offset = instr.im1;
         let rs1 = instr.rs1 as usize;
         let rd = instr.rd as usize;
@@ -30,5 +30,7 @@ impl ScalarFU for Jump {
             }
             _ => println!("Unrecognized opcode")
         }
+
+        return true;
     }
 }

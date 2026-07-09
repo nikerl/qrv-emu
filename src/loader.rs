@@ -22,14 +22,15 @@ pub fn load_bin(path_str: String, srf: &mut ScalarRF, mem: &mut Memory) {
         .filter(|p| p.p_type == elf::abi::PT_LOAD)
         .collect();
 
-    srf[PC] = file.ehdr.e_entry as u32; // init pc to program's entry point
-    srf[SP] = mem.len() - 0xFF; // init sp to an address just under mem length
-
     // set the base address for automatic vaddr translation
     mem.base_addr = load_segments.iter().map(|p| p.p_vaddr as u32).min().unwrap();
     mem.program_break = load_segments.iter()
-        .map(|p| (p.p_vaddr + p.p_memsz) as u32)
-        .max().unwrap();
+            .map(|p| (p.p_vaddr + p.p_memsz) as u32)
+            .max()
+            .unwrap();
+
+    srf[PC] = file.ehdr.e_entry as usize as u32; // init pc to program's entry point
+    srf[SP] = mem.len() - 0xFF; // init sp to an address just under mem length
 
 
     for phdr in &load_segments  {
