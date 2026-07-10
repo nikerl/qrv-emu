@@ -42,7 +42,7 @@ riscv32-unknown-elf-gcc \
     -nostdlib -nostartfiles \
     -T validation/include/link.ld \
     -o bin/add_test.elf \
-    validation/instruction-tests/add.S
+    validation/rv32im-tests/add.S
 ```
 
 Run the test:
