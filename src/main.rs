@@ -4,6 +4,7 @@ mod dispatcher;
 mod instruction_set;
 mod data;
 mod exec;
+use std::env;
 
 use crate::{
     data::{
@@ -25,7 +26,19 @@ fn main() {
     let mut srf = ScalarRF::new();
     let mut mrf = MatrixRF::new();
 
-    load_bin("hello_world".to_string(), &mut srf, &mut mem);
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() == 1 {
+        load_bin("hello_world".to_string(), &mut srf, &mut mem);
+    }
+    else if args.len() == 2 {
+        load_bin(args[1].clone(), &mut srf, &mut mem);
+    }
+    else {
+        println!("Error: Expected 1 argument: Path to binary");
+        return;
+    }
+
 
     loop {
         let instruction: Instruction = decode(mem.load_word(srf[PC] as usize));

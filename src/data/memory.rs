@@ -1,6 +1,11 @@
-use std::{ops::{Index, IndexMut}};
+use std::{ops::{Index, IndexMut}, process::exit};
 
 const MEM_SIZE: usize = 0x004F_FFFF; // Memory size in bytes
+
+pub const TOHOST_ADDR: usize = 0x1000_0000;
+pub const  IO_WRITE_ADDR: usize = 0x1000_1000;
+pub const  RVMODEL_HALT_PASS: u32 = 1;
+pub const  RVMODEL_HALT_FAIL: u32 = 3;
 
 pub struct Memory {
     mem: Vec<u8>,
@@ -10,12 +15,23 @@ pub struct Memory {
 
 impl Memory {
     pub fn new() -> Self{
-        return Memory { mem: vec![0; MEM_SIZE], program_break: 0, base_addr: 0 }
+        return Memory { mem: vec![0; MEM_SIZE as usize], program_break: 0, base_addr: 0 }
+    }
+
+    fn to_host(&self, word: u32) {
+        if word == RVMODEL_HALT_PASS {
+            println!("Test PASSED\nExiting...");
+            exit(0);
+        }
+        else if word == RVMODEL_HALT_FAIL {
+            println!("Test FAILED\nExiting...");
+            exit(1);
+        }
     }
 
     pub fn translate_vaddr(&self, vaddr: usize) -> usize {
         let addr: usize = ((vaddr as u32) - self.base_addr) as usize;
-        if addr >= MEM_SIZE {
+        if addr >= MEM_SIZE as usize {
             panic!("Memory access out of bounds: vaddr {:#x} (translated {:#x})", vaddr, addr);
         }
         return addr;
@@ -26,6 +42,15 @@ impl Memory {
         return (self.mem[addr + 3] as u32) << 24 | (self.mem[addr + 2] as u32) << 16 | (self.mem[addr + 1] as u32) << 8 | self.mem[addr] as u32;
     }
     pub fn store_word(&mut self, addr: usize, word: u32) {
+        if addr == TOHOST_ADDR { // Intercept writes to host
+            self.to_host(word);
+            return;
+        }
+        else if addr == IO_WRITE_ADDR { // Intercepts IO writes
+            print!("{}", word as u8 as char);
+            return;
+        }
+
         let addr = self.translate_vaddr(addr);
         self.mem[addr] = word as u8;
         self.mem[addr + 1] = (word >> 8) as u8;
