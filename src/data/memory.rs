@@ -20,11 +20,11 @@ impl Memory {
 
     fn to_host(&self, word: u32) {
         if word == RVMODEL_HALT_PASS {
-            println!("Test PASSED\nExiting...");
+            println!("Test PASSED\nExit");
             exit(0);
         }
         else if word == RVMODEL_HALT_FAIL {
-            println!("Test FAILED\nExiting...");
+            println!("Test FAILED\nExit");
             exit(1);
         }
     }
