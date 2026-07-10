@@ -1,0 +1,3 @@
+# Exclude from language stats
+validation/rv32im-tests/* linguist-vendored
+validation/include/test_macros.h linguist-vendored
