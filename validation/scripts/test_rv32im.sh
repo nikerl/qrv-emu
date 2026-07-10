@@ -1,3 +1,8 @@
+# Copyright 2026
+# Apache License, Version 2.0, see LICENSE for details.
+#
+# Author: Nik Erlandsson
+
 RV32IM_TESTS="validation/rv32im-tests"
 BINARY_PATH="bin"
 pass=0
