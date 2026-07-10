@@ -32,3 +32,20 @@ Add compiler to path:
 ```
 export PATH=/opt/riscv/bin:PATH
 ```
+
+## Run a Test
+Build the binary:
+```
+riscv32-unknown-elf-gcc \
+    -march=rv32im -mabi=ilp32 \
+    -I validation/include \
+    -nostdlib -nostartfiles \
+    -T validation/include/link.ld \
+    -o bin/add_test.elf \
+    validation/instruction-tests/add.S
+```
+
+Run the test:
+```
+cargo run bin/add_test.elf
+```
