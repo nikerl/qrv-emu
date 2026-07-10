@@ -7,7 +7,8 @@ A RISC-V emulator for RV32IM + [QuadriSparse](https://github.com/nikerl/quadrisp
 The ultimate goal is to create a Golden Reference Model which can be used to validate QuadriSparse against. It also enables easier development of software targeting QuadriSparse. 
 
 
-## Install RISC-V Toolchain
+## Setup RISC-V Toolchain
+### Install
 Install requirements: 
 ```
 sudo apt install autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
@@ -33,19 +34,38 @@ Add compiler to path:
 export PATH=/opt/riscv/bin:PATH
 ```
 
-## Run a Test
-Build the binary:
+### Test it
+Build a binary:
 ```
 riscv32-unknown-elf-gcc \
     -march=rv32im -mabi=ilp32 \
-    -I validation/include \
-    -nostdlib -nostartfiles \
-    -T validation/include/link.ld \
-    -o bin/add_test.elf \
-    validation/rv32im-tests/add.S
+    -o bin/hello_world.elf \
+    validation/programs/hello_world.c
 ```
 
-Run the test:
+Run the binary:
 ```
-cargo run bin/add_test.elf
+cargo run bin/hello_world.elf
+```
+
+This can be done with a single make command as well:
+```
+make run-program PROGRAM=hello_world.c
+```
+
+## Emulator Validation
+To validate the correctness of the emulator and the toolchain install you can run the following script:
+```
+bash validation/scripts/test_rv32im.sh
+```
+
+If everything is installed correctly you should see an output like this:
+```
+...
+sw: PASSED
+xori: PASSED
+xor: PASSED
+
+====================
+Passed 45/45 tests
 ```
