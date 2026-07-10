@@ -35,7 +35,7 @@ TEST_FUNC_NAME: \
 	.byte 	0x00; \
 	.balign 4, 0; \
 .prname_done: \
-	addi	a1,zero,'.' \
+	addi	a1,zero,'.'; \
 	sw		a1,0(a2); \
 	sw		a1,0(a2);
 
