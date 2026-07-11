@@ -16,6 +16,8 @@ pub enum RegNames {
     A5 = 15,
     A6 = 16,
     A7 = 17,
+    MS1 = 20,
+    MS2 = 21,
     PC = 32,
 }
 

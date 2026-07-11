@@ -14,13 +14,13 @@ impl MatrixRF {
 }
 
 impl Index<usize> for MatrixRF {
-    type Output = [[i32; 4]; 4];
-    fn index(&self, i: usize) -> &[[i32; 4]; 4] {
+    type Output = [[i32; MATRIX_SIZE]; MATRIX_SIZE];
+    fn index(&self, i: usize) -> &[[i32; MATRIX_SIZE]; MATRIX_SIZE] {
         return &self.rf[i];
     }
 }
 impl IndexMut<usize> for MatrixRF {
-    fn index_mut(&mut self, i: usize) -> &mut [[i32; 4]; 4] {
+    fn index_mut(&mut self, i: usize) -> &mut [[i32; MATRIX_SIZE]; MATRIX_SIZE] {
         return &mut self.rf[i];
     }
 }

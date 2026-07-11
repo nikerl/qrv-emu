@@ -2,7 +2,8 @@ use crate::{
     instruction_set::{
         Instruction,
         InstructionSet
-    }
+    },
+    data::rf_scalar::RegNames::*
 };
 
 const OPCODE_MASK: u32 = 0b0000_0000_0000_0000_0000_0000_0111_1111;
@@ -318,14 +319,14 @@ fn parse_mm_type(instruction: u32) -> Instruction {
         0b00100 => {
             operation = InstructionSet::SPLDW;
             im1 = ((instruction >> 15) & 0b111) as i32;
-            rs2 = 10;
-            rs1 = 11;
+            rs2 = MS1 as u8;
+            rs1 = MS2 as u8;
             md = ((instruction >> 7) & 0b111) as u8
         }
         0b00010 => {
             operation = InstructionSet::DLDW;
-            rs2 = 10;
-            rs1 = 11;
+            rs2 = MS1 as u8;
+            rs1 = MS2 as u8;
             ms1 = ((instruction >> 15) & 0b111) as u8;
             md = ((instruction >> 7) & 0b111) as u8
         }

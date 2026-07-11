@@ -37,6 +37,21 @@ impl Memory {
         return addr;
     }
 
+    pub fn load_128b(&self, addr: usize) -> [i32; 4] {
+        let mut line: [i32; 4] = [0; 4];
+        line[0] = self.load_word(addr) as i32;
+        line[1] = self.load_word(addr + 4) as i32;
+        line[2] = self.load_word(addr + 8) as i32;
+        line[3] = self.load_word(addr + 12) as i32;
+
+        return line;
+    }
+    pub fn store_128b(&mut self, addr: usize, line: [i32; 4]) {
+        self.store_word(addr, line[0] as u32);
+        self.store_word(addr + 4, line[1] as u32);
+        self.store_word(addr + 8, line[2] as u32);
+        self.store_word(addr + 12, line[3] as u32);
+    }
     pub fn load_word(&self, addr: usize) -> u32 {
         let addr = self.translate_vaddr(addr);
         return (self.mem[addr + 3] as u32) << 24 | (self.mem[addr + 2] as u32) << 16 | (self.mem[addr + 1] as u32) << 8 | self.mem[addr] as u32;
