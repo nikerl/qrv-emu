@@ -43,6 +43,7 @@ run-test:
 build-program:
 	$(RISCV)/riscv32-unknown-elf-gcc \
 		-march=rv32im -mabi=ilp32 \
+		-I $(INCLUDE) \
 		-o $(TEST_BINS)/$(PROGRAM).elf \
 		$(PROGRAM_PATH)/$(PROGRAM)
 

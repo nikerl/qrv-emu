@@ -5,16 +5,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include "quadrisparse.h"
 
-// compile-time macros instead of functions, so args stay constant expressions
-#define ENCODE_MLD(md, base, stride) \
-    (0b0101011 | ((md) << 7) | ((base) << 15) | ((stride) << 20) | 0b00000 << 27)
-
-#define ENCODE_MST(ms1, base, stride) \
-    (0b0101011 | ((ms1) << 7) | ((base) << 15) | ((stride) << 20) | 0b00001 << 27)
-
-#define ENCODE_MMASA(md, ms1, ms2) \
-    (0b0101011 | ((md) << 15) | ((ms1) << 18) | ((ms2) << 21) | 0b11110 << 27)
 
 int main(void) {
     int a[4][4] = {
