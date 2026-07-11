@@ -277,7 +277,7 @@ fn parse_j_type(instruction: u32) -> Instruction {
 }
 
 fn parse_mm_type(instruction: u32) -> Instruction {
-    let func7: u8 = ((instruction & FUNC7_MASK) >> 25) as u8;
+    let func7: u8 = ((instruction & FUNC7_MASK) >> 27) as u8;
 
     let operation: InstructionSet;
     let mut im1: i32 = 0;

@@ -81,6 +81,7 @@ pub enum InstructionSet {
 
 #[derive(Debug)]
 #[derive(Clone)]
+#[derive(PartialEq)]
 pub enum InstrType {
     RType,
     IType,
