@@ -319,14 +319,14 @@ fn parse_mm_type(instruction: u32) -> Instruction {
         0b00100 => {
             operation = InstructionSet::SPLDW;
             im1 = ((instruction >> 15) & 0b111) as i32;
-            rs2 = MS1 as u8;
-            rs1 = MS2 as u8;
+            rs2 = MS2 as u8; // col base
+            rs1 = MS1 as u8; // val base
             md = ((instruction >> 7) & 0b111) as u8
         }
         0b00010 => {
             operation = InstructionSet::DLDW;
-            rs2 = MS1 as u8;
-            rs1 = MS2 as u8;
+            rs2 = MS2 as u8; // base
+            rs1 = MS1 as u8; // stride
             ms1 = ((instruction >> 15) & 0b111) as u8;
             md = ((instruction >> 7) & 0b111) as u8
         }

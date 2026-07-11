@@ -50,7 +50,7 @@ impl MatrixFU for MatrixLSU {
             }
             DLDW => {
                 for i in 0..4u32 {
-                    mrf[md][i as usize] = mem.load_128b((base_addr + (mrf[md][1][i as usize] as u32) * stride) as usize)
+                    mrf[md][i as usize] = mem.load_128b((base_addr + (mrf[ms1][1][i as usize] as u32) * stride) as usize)
                 }
             }
             _ => println!("Unrecognized opcode")
