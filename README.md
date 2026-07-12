@@ -31,7 +31,7 @@ sudo make -j$(nproc)
 
 Add compiler to path:
 ```
-export PATH=/opt/riscv/bin:PATH
+export PATH=/opt/riscv/bin:$PATH
 ```
 
 ### Test it
@@ -56,16 +56,17 @@ make run-program PROGRAM=hello_world.c
 ## Emulator Validation
 To validate the correctness of the emulator and the toolchain install you can run the following script:
 ```
-bash validation/scripts/test_rv32im.sh
+bash validation/scripts/test_instructions.sh
 ```
 
 If everything is installed correctly you should see an output like this:
 ```
 ...
-sw: PASSED
-xori: PASSED
-xor: PASSED
+mst: PASSED
+mzero: PASSED
+spld: PASSED
+spmac: PASSED
 
 ====================
-Passed 45/45 tests
+Passed 52/52 tests
 ```
