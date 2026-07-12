@@ -26,6 +26,7 @@ run:
 	RUSTFLAGS=-Awarnings cargo run $(BIN)
 
 build-test:
+	@mkdir -p $(TEST_BINS)
 	$(RISCV) \
 		-march=rv32im -mabi=ilp32 \
 		-I $(INCLUDE) \
@@ -49,6 +50,7 @@ run-test:
 	$(MAKE) run BIN=$(TEST_BINS)/$(INSTR)_test.elf
 
 build-program:
+	@mkdir -p $(TEST_BINS)
 	$(RISCV) \
 		-march=rv32im -mabi=ilp32 \
 		-I $(INCLUDE) \
