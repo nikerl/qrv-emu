@@ -1,3 +1,5 @@
+#!/usr/bin/env bash 
+
 # Copyright 2026
 # Apache License, Version 2.0, see LICENSE for details.
 #
@@ -65,4 +67,7 @@ echo "===================="
 echo "Passed $pass/$total tests"
 if [ ${#failed_tests[@]} -gt 0 ]; then
     echo "Failed: ${failed_tests[*]}"
+    exit 1
 fi
+
+exit 0

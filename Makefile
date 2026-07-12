@@ -5,7 +5,7 @@ ifeq (,$(filter -j% --jobs=% --jobs% --jobserver%,$(MAKEFLAGS)))
 	MAKEFLAGS += -j$(shell nproc)
 endif
 
-RISCV := /opt/riscv/bin
+RISCV ?= /opt/riscv/bin/riscv32-unknown-elf-gcc
 EXECUTABLE_PATH := target/debug/qrv-emu
 INCLUDE := validation/include
 RV32IM_TESTS := validation/rv32im-tests
@@ -26,7 +26,7 @@ run:
 	RUSTFLAGS=-Awarnings cargo run $(BIN)
 
 build-test:
-	$(RISCV)/riscv32-unknown-elf-gcc \
+	$(RISCV) \
 		-march=rv32im -mabi=ilp32 \
 		-I $(INCLUDE) \
 		-nostdlib -nostartfiles \
@@ -49,7 +49,7 @@ run-test:
 	$(MAKE) run BIN=$(TEST_BINS)/$(INSTR)_test.elf
 
 build-program:
-	$(RISCV)/riscv32-unknown-elf-gcc \
+	$(RISCV) \
 		-march=rv32im -mabi=ilp32 \
 		-I $(INCLUDE) \
 		-o $(TEST_BINS)/$(PROGRAM).elf \
