@@ -1,4 +1,5 @@
-<img width="1983" height="550" alt="pun intended" src="https://github.com/user-attachments/assets/ede982fb-1391-495a-b2ff-abbb966c4116" />
+<img width="5000" height="1360" alt="banner" src="https://github.com/user-attachments/assets/e850d413-8313-4e37-9b00-535c98e0a58c" />
+
 
 
 # QRV-Emu: The QuadriSparse RISC-V Emulator
