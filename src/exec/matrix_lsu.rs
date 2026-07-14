@@ -48,9 +48,14 @@ impl ExecutionUnit for MatrixLSU {
                 }
             }
             SPLDW => {
-                for i in 0..nnz {
-                    mrf[md][0][i as usize] = mem.load_word((csr_val_base + i*4) as usize) as i32; // csr val
-                    mrf[md][1][i as usize] = mem.load_word((csr_col_base + i*4) as usize) as i32; // csr col
+                for i in 0..4u32 {
+                    if i < nnz {
+                        mrf[md][0][i as usize] = mem.load_word((csr_val_base + i*4) as usize) as i32; // csr val
+                        mrf[md][1][i as usize] = mem.load_word((csr_col_base + i*4) as usize) as i32; // csr col
+                    } else {
+                        mrf[md][0][i as usize] = 0;
+                        mrf[md][1][i as usize] = 0;
+                    }
                 }
             }
             DLDW => {
