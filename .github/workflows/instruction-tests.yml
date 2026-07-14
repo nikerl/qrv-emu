@@ -1,4 +1,4 @@
-name: Rust
+name: Instruction Tests
 
 on:
   push:
