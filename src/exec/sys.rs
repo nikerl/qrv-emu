@@ -41,6 +41,29 @@ impl ExecutionUnit for Sys {
                         regs[A0] = file_table.remove(fd) as u32;
                     }
 
+                    62 => { // lseek
+                        let fd = regs[A0] as i32;
+                        let offset = regs[A1] as i32;
+                        let whence = regs[A2];
+
+                        match file_table.files.get_mut(&fd) {
+                            Some(file) => {
+                                use std::io::{Seek, SeekFrom};
+                                let seek_from = match whence {
+                                    0 => SeekFrom::Start(offset as u64),   // SEEK_SET
+                                    1 => SeekFrom::Current(offset as i64), // SEEK_CUR
+                                    2 => SeekFrom::End(offset as i64),     // SEEK_END
+                                    _ => { regs[A0] = -1i32 as u32; return false; }
+                                };
+                                match file.seek(seek_from) {
+                                    Ok(pos) => regs[A0] = pos as u32,
+                                    Err(_) => regs[A0] = -1i32 as u32,
+                                }
+                            }
+                            _ => regs[A0] = -1i32 as u32,
+                        }
+                    }
+
                     63 => { // read
                         let fd = regs[A0];
                         let str_ptr = regs[A1];
