@@ -1,19 +1,25 @@
+// Copyright 2026
+// Apache License, Version 2.0, see LICENSE for details.
+//
+// Author: Nik Erlandsson
+
 use crate::{
-    data::{
-        memory::Memory, 
-        rf_scalar::ScalarRF
-    }, 
     instruction_set::{
         Instruction, 
         InstructionSet::*
     }, 
-    exec::ScalarFU
+    exec::ExecutionUnit,
+    system::SystemState
 };
 
 pub struct Lsu;
 
-impl ScalarFU for Lsu {
-    fn execute(instr: Instruction, regs: &mut ScalarRF, mem: &mut Memory) -> bool {
+impl ExecutionUnit for Lsu {
+    fn execute(instr: Instruction, state: &mut SystemState) -> bool {
+        let mem = &mut state.mem;
+        let regs = &mut state.srf;
+        
+
         let rd = instr.rd as usize;
         let addr = (regs[instr.rs1 as usize].wrapping_add(instr.im1 as u32)) as usize;
         let val = regs[instr.rs2 as usize];

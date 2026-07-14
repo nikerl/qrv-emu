@@ -1,4 +1,15 @@
-use std::{collections::HashMap, fs::File, ops::{Index, IndexMut}, process::exit};
+// Copyright 2026
+// Apache License, Version 2.0, see LICENSE for details.
+//
+// Author: Nik Erlandsson
+
+use std::{
+    ops::{
+        Index, 
+        IndexMut
+    }, 
+    process::exit
+};
 
 const MEM_SIZE: usize = 0x004F_FFFF; // Memory size in bytes
 
@@ -11,12 +22,11 @@ pub struct Memory {
     mem: Vec<u8>,
     pub program_break: u32,
     pub base_addr: u32,
-    pub files: HashMap<i32, File>,
 }
 
 impl Memory {
     pub fn new() -> Self{
-        return Memory { mem: vec![0; MEM_SIZE as usize], program_break: 0, base_addr: 0, files: HashMap::new()}
+        return Memory { mem: vec![0; MEM_SIZE as usize], program_break: 0, base_addr: 0 }
     }
 
     fn to_host(&self, word: u32) {

@@ -1,20 +1,23 @@
+// Copyright 2026
+// Apache License, Version 2.0, see LICENSE for details.
+//
+// Author: Nik Erlandsson
+
 use crate::{
-    data::{
-        memory::Memory, 
-        rf_scalar::{ScalarRF, RegNames::*}
-    }, 
+    data::rf_scalar::RegNames::*,
     instruction_set::{
         Instruction, 
         InstructionSet::*
     }, 
-    exec::ScalarFU
+    exec::ExecutionUnit,
+    system::SystemState
 };
 
 pub struct Alu;
 
-impl ScalarFU for Alu {
-    fn execute(instr: Instruction, regs: &mut ScalarRF, _mem: &mut Memory) -> bool {
-        //println!("instruction dispatched to alu: {:#?}", instr);
+impl ExecutionUnit for Alu {
+    fn execute(instr: Instruction, state: &mut SystemState) -> bool {
+        let regs = &mut state.srf;
 
         let im1 = instr.im1;
         let rs1 = instr.rs1 as usize;

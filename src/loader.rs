@@ -1,16 +1,23 @@
+// Copyright 2026
+// Apache License, Version 2.0, see LICENSE for details.
+//
+// Author: Nik Erlandsson
+
 use elf::{
     ElfBytes, 
     endian::AnyEndian
 };
 
 use crate::{
-    data::{
-        memory::Memory, 
-        rf_scalar::{ScalarRF, RegNames::*}
-    }
+    system::SystemState,
+    data::rf_scalar::RegNames::*
 };
 
-pub fn load_bin(path_str: String, srf: &mut ScalarRF, mem: &mut Memory) {
+pub fn load_bin(path_str: String, state: &mut SystemState) {
+    let mem = &mut state.mem;
+    let srf = &mut state.srf;
+
+
     let path = std::path::PathBuf::from(path_str);
     let file_data = std::fs::read(path).expect("failed to read file");
     let file = ElfBytes::<AnyEndian>::minimal_parse(&file_data).expect("failed to parse ELF");

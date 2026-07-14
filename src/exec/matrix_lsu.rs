@@ -1,21 +1,26 @@
+// Copyright 2026
+// Apache License, Version 2.0, see LICENSE for details.
+//
+// Author: Nik Erlandsson
+
 use crate::{
-    data::{
-        memory::Memory, 
-        rf_scalar::ScalarRF,
-        rf_matrix::MatrixRF
-    }, 
     instruction_set::{
         Instruction, 
         InstructionSet::*
     }, 
-    exec::MatrixFU
+    exec::ExecutionUnit,
+    system::SystemState
 };
 
 
 pub struct MatrixLSU;
 
-impl MatrixFU for MatrixLSU {
-    fn execute(instr: Instruction, srf: &mut ScalarRF, mrf: &mut MatrixRF, mem: &mut Memory) -> bool {
+impl ExecutionUnit for MatrixLSU {
+    fn execute(instr: Instruction, state: &mut SystemState) -> bool {
+        let mem = &mut state.mem;
+        let srf = &mut state.srf;
+        let mrf = &mut state.mrf;
+
         let base_addr = srf[instr.rs1 as usize]; 
         let stride = srf[instr.rs2 as usize] * 4; // translate stride from words to bytes
         let csr_val_base = base_addr;

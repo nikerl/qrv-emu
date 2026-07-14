@@ -1,3 +1,8 @@
+// Copyright 2026
+// Apache License, Version 2.0, see LICENSE for details.
+//
+// Author: Nik Erlandsson
+
 use crate::{
     instruction_set::{
         Instruction,

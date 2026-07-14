@@ -1,19 +1,19 @@
+// Copyright 2026
+// Apache License, Version 2.0, see LICENSE for details.
+//
+// Author: Nik Erlandsson
+
 use std::process::exit;
 
 use crate::{
-    data::{
-        memory::Memory, 
-        rf_matrix::MatrixRF, 
-        rf_scalar::ScalarRF
-    }, 
+    system::SystemState,
     instruction_set::{
         InstrType, 
         Instruction,
         InstructionSet::*
     }, 
     exec::{
-        ScalarFU, 
-        MatrixFU,
+        ExecutionUnit,
         alu::Alu,
         branch::Branch,
         jump::Jump,
@@ -26,36 +26,36 @@ use crate::{
 
 
 /// Returns bool: branch taken (true), or not taken (false)
-pub fn dispatch(instruction: Instruction, srf: &mut ScalarRF, mrf: &mut MatrixRF, mem: &mut Memory) -> bool {
+pub fn dispatch(instruction: Instruction, state: &mut SystemState) -> bool {
     match instruction.instr_type {
         InstrType::RType => {
-            return Alu::execute(instruction, srf, mem);
+            return Alu::execute(instruction, state);
         }
         InstrType::IType => {
             match instruction.opcode {
-                ADDI | XORI | ORI | ANDI | SLLI | SRLI | SRAI | SLTI | SLTIU => return Alu::execute(instruction, srf, mem),
-                LB | LH | LW | LBU | LHU => return Lsu::execute(instruction, srf, mem),
-                JALR => return Jump::execute(instruction, srf, mem),
-                ECALL | EBREAK | FENCE => return Sys::execute(instruction, srf, mem),
+                ADDI | XORI | ORI | ANDI | SLLI | SRLI | SRAI | SLTI | SLTIU => return Alu::execute(instruction, state),
+                LB | LH | LW | LBU | LHU => return Lsu::execute(instruction, state),
+                JALR => return Jump::execute(instruction, state),
+                ECALL | EBREAK | FENCE => return Sys::execute(instruction, state),
                 _ => {println!("Unrecognized opcode"); exit(1)}
             }
         }
         InstrType::SType => {
-            return Lsu::execute(instruction, srf, mem);
+            return Lsu::execute(instruction, state);
         }
         InstrType::BType => {
-            return Branch::execute(instruction, srf, mem);
+            return Branch::execute(instruction, state);
         }
         InstrType::UType => {
-            return Alu::execute(instruction, srf, mem);
+            return Alu::execute(instruction, state);
         }
         InstrType::JType => {
-            return Jump::execute(instruction, srf, mem);
+            return Jump::execute(instruction, state);
         }
         InstrType::MMType => {
             match instruction.opcode {
-                MMASAW | SPMACW => return MatrixMultiply::execute(instruction, srf, mrf, mem),
-                MZERO | MLDW | MSTW | SPLDW | DLDW => return MatrixLSU::execute(instruction, srf, mrf, mem),
+                MMASAW | SPMACW => return MatrixMultiply::execute(instruction, state),
+                MZERO | MLDW | MSTW | SPLDW | DLDW => return MatrixLSU::execute(instruction, state),
                 _ => {println!("Unrecognized opcode"); exit(1)}
             }
         }

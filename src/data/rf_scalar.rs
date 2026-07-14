@@ -1,4 +1,15 @@
-use std::{fmt, ops::{Index, IndexMut}};
+// Copyright 2026
+// Apache License, Version 2.0, see LICENSE for details.
+//
+// Author: Nik Erlandsson
+
+use std::{
+    fmt, 
+    ops::{
+        Index, 
+        IndexMut
+    }
+};
 use RegNames::*;
 
 #[allow(dead_code)]
