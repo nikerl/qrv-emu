@@ -1,4 +1,4 @@
-use std::{ops::{Index, IndexMut}, process::exit};
+use std::{collections::HashMap, fs::File, ops::{Index, IndexMut}, process::exit};
 
 const MEM_SIZE: usize = 0x004F_FFFF; // Memory size in bytes
 
@@ -11,11 +11,12 @@ pub struct Memory {
     mem: Vec<u8>,
     pub program_break: u32,
     pub base_addr: u32,
+    pub files: HashMap<i32, File>,
 }
 
 impl Memory {
     pub fn new() -> Self{
-        return Memory { mem: vec![0; MEM_SIZE as usize], program_break: 0, base_addr: 0 }
+        return Memory { mem: vec![0; MEM_SIZE as usize], program_break: 0, base_addr: 0, files: HashMap::new()}
     }
 
     fn to_host(&self, word: u32) {
@@ -29,6 +30,7 @@ impl Memory {
         }
     }
 
+    
     pub fn translate_vaddr(&self, vaddr: usize) -> usize {
         let addr: usize = ((vaddr as u32) - self.base_addr) as usize;
         if addr >= MEM_SIZE as usize {
@@ -36,7 +38,22 @@ impl Memory {
         }
         return addr;
     }
+    
+    /// Loads a null-terminated string from an address in memory
+    pub fn load_str(&self, vaddr: usize) -> String {
+        let mut result: String = "".to_string();
+        let mut index: usize = 0;
+        loop {
+            let c = self.load_byte(vaddr + index) as char;
+            if c == '\0' {
+                break;
+            }
+            result.push_str(&c.to_string());
+            index += 1;
+        }
 
+        return result;
+    }
     pub fn load_128b(&self, addr: usize) -> [i32; 4] {
         let mut line: [i32; 4] = [0; 4];
         line[0] = self.load_word(addr) as i32;

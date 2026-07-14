@@ -7,7 +7,7 @@ A RISC-V emulator for RV32IM + [QuadriSparse](https://github.com/nikerl/quadrisp
 
 The ultimate goal of this project is to create a Golden Reference Model which can be used to validate QuadriSparse against. It also enables easier development of software targeting QuadriSparse. The emulator supports the basic 32-bit integer RISC-V ISA with the standard multiplication extension. It also supports the custom instructions for sparse and dense matrix multiplication outlined in QuadriSparse. 
 
-QRV-Emu is an Instruction Set Simulator (ISS) that emulates the functionality of the instruction set. It accepts ELF binaries compiled for RISC-V and so far it supports the syscalls needed for basic I/O and heap allocation (exit, write, read, brk).
+QRV-Emu is an Instruction Set Simulator (ISS) that emulates the functionality of the instruction set. It accepts ELF binaries compiled for RISC-V and so far it supports the syscalls needed for basic I/O and heap allocation (exit, open, write, read, brk).
 
 
 ## Setup RISC-V Toolchain
