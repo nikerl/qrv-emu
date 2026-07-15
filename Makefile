@@ -68,6 +68,21 @@ run-program:
 	$(MAKE) build-program 
 	$(MAKE) run BIN=$(TEST_BINS)/$(PROGRAM).elf
 
+
+define CLANGD_CONFIG
+CompileFlags:
+  Compiler: $(RISCV)/riscv32-unknown-elf-gcc
+  Add:
+    - -march=rv32im
+    - -mabi=ilp32
+    - -I
+    - $(CURDIR)/validation/include
+endef
+export CLANGD_CONFIG
+
+setup-clangd:
+	@echo "$$CLANGD_CONFIG" > .clangd
+
 clean-bin:
 	rm bin/*
 

@@ -18,6 +18,7 @@ bin/
 
 # VScode
 .vscode/
+.clangd
 
 # Matrix data files
 *.hex

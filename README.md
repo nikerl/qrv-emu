@@ -11,6 +11,8 @@ QRV-Emu is an Instruction Set Simulator (ISS) that emulates the functionality of
 
 
 ## Setup RISC-V Toolchain
+You can chose to either download precompiled binaries or to compile the toolchain from source. 
+
 ### Prebuilt binaries
 xPack provides precompiled RISCV GCC distribtuion [here](https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack)
 
@@ -69,6 +71,16 @@ This can be done with a single make command as well:
 ```
 make run-program PROGRAM=hello_world.c
 ```
+
+### Setup clangd
+Generate a `.clangd` file to point clangd to the RISC-V compiler and your header files, use this command:
+```
+make setup-clangd
+```
+Add paths to other header files as needed.
+
+To apply the changes in VSCode you need to restart clangd. Press ctr+shift+p and type "clangd: restart language server"
+
 
 ## Emulator Validation
 To validate the correctness of the emulator and the toolchain install you can run the following script:
