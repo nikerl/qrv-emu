@@ -1,7 +1,5 @@
 <img width="5000" height="1360" alt="banner" src="https://github.com/user-attachments/assets/e850d413-8313-4e37-9b00-535c98e0a58c" />
 
-
-
 # QRV-Emu: The QuadriSparse RISC-V Emulator
 A RISC-V emulator for RV32IM + [QuadriSparse](https://github.com/nikerl/quadrisparse) written in Rust.
 
@@ -17,64 +15,64 @@ You can chose to either download precompiled binaries or to compile the toolchai
 xPack provides precompiled RISCV GCC distribtuion [here](https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack)
 
 Download and unpack:
-```
+```bash
+# Create destination folder
 sudo mkdir /opt/riscv
+
+# Download the toolchain
 curl -L "https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz" -o /tmp/riscv-toolchain.tar.gz 
+
+# Extract it
 tar -xzf /tmp/riscv-toolchain.tar.gz -C /opt/riscv --strip-components=1
+
+# Add it to PATH
 export PATH=/opt/riscv/bin:$PATH
 ```
 
 ### Build from source
-Note this it can take up to an hour to setup.
-
-Install requirements: 
-```
+Build the toolchain from source. Note this it can take up to an hour to setup.
+```bash
+# Install the required packages (Debian)
 sudo apt install autoconf automake autotools-dev curl python3 libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev
-```
 
-Clone the repo and setup target dir:
-```
+# Create destination folder
 sudo mkdir /opt/riscv
-git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
-cd riscv-gnu-toolchain
-mkdir build
-```
 
-Build:
-```
-cd build
+# Clone repo
+git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
+
+# Compile the toolchain
+mkdir riscv-gnu-toolchain/build && cd riscv-gnu-toolchain/build
 ../configure --prefix=/opt/riscv --with-arch=rv32im --with-abi=ilp32
 sudo make -j$(nproc)
-```
 
-Add compiler to path:
-```
+# Add it to PATH
 export PATH=/opt/riscv/bin:$PATH
 ```
 
 ### Test the toolchain
-Build a binary:
-```
+```bash
+# Create destination folder
 mkdir bin
+
+# Build
 riscv32-unknown-elf-gcc \
     -march=rv32im -mabi=ilp32 \
     -o bin/hello_world.elf \
     validation/programs/hello_world.c
-```
 
-Run the binary:
-```
+# Run
 cargo run bin/hello_world.elf
 ```
 
 This can be done with a single make command as well:
-```
+```bash
 make run-program PROGRAM=hello_world.c
 ```
 
 ### Setup clangd
 Generate a `.clangd` file to point clangd to the RISC-V compiler and your header files, use this command:
-```
+```bash
 make setup-clangd
 ```
 Add paths to other header files as needed.
@@ -84,7 +82,7 @@ To apply the changes in VSCode you need to restart clangd. Press ctr+shift+p and
 
 ## Emulator Validation
 To validate the correctness of the emulator and the toolchain install you can run the following script:
-```
+```bash
 bash validation/scripts/test_instructions.sh
 ```
 
