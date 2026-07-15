@@ -7,11 +7,9 @@ use std::{
     fs::{
         File,
         OpenOptions
-    }, 
-    io::{
+    }, io::{
         self, Read
-    }, 
-    process::exit
+    }, process::exit, time::{Duration, Instant, SystemTime}
 };
 
 use crate::{
@@ -128,6 +126,26 @@ impl ExecutionUnit for Sys {
                             mem.program_break = new_break;
                         }
                         regs[A0] = mem.program_break;
+                    }
+
+                    403 => { // clock_gettime
+                        let clk_id = regs[A0];
+                        let tp_addr = regs[A1] as usize;
+
+                        if clk_id == 0 || clk_id == 1 { // Realtime
+                            let time = SystemTime::now()
+                                .duration_since(SystemTime::UNIX_EPOCH)
+                                .unwrap();
+
+                            mem.store_word(tp_addr, time.as_secs() as u32);
+                            mem.store_word(tp_addr + 4, time.subsec_nanos() as u32);
+
+                            regs[A0] = 0;
+                        }
+                        else {
+                            println!("Unrecognized clock id {}", clk_id);
+                            regs[A0] = -1i32 as u32;
+                        }
                     }
 
                     1024 => { // open
