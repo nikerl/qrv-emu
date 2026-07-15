@@ -17,13 +17,16 @@ BIN ?=
 INSTR ?=
 PROGRAM ?=
 TEST_PATH ?=
+PREFIX ?=
+ARGS ?=
+SIZE ?=
 
 
 build:
 	cargo build
 
 run:
-	RUSTFLAGS=-Awarnings cargo run $(BIN)
+	RUSTFLAGS=-Awarnings RUST_BACKTRACE=1 cargo run $(BIN) $(ARGS)
 
 build-test:
 	@mkdir -p $(TEST_BINS)
@@ -64,7 +67,6 @@ run-program:
 	fi
 	$(MAKE) build-program 
 	$(MAKE) run BIN=$(TEST_BINS)/$(PROGRAM).elf
-
 
 clean-bin:
 	rm bin/*
