@@ -6,19 +6,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include "quadrisparse.h"
 
-void load_matrix(int* array, char* path, int num_elements) {
+int* load_matrix(int num_elements, char* path_prefix, char* path_suffix) {
+    int* mat_array = malloc(num_elements * sizeof(int));
+
+    char path[100] = "";
+    snprintf(path, sizeof(path), "%s%s", path_prefix, path_suffix);
+
     FILE *fptr = fopen(path, "r");
     char buf[16];
 
     int index = 0;
     while (fgets(buf, sizeof(buf), fptr) && index < num_elements) {
-        array[index] = (int)strtol(buf, NULL, 16);
+        mat_array[index] = (int)strtol(buf, NULL, 16);
         index++;
     }
 
     fclose(fptr);
+
+    return mat_array;
 }
 
 int count_lines(const char* path) {
@@ -51,23 +59,31 @@ void issue_instruction(uint32_t instr, uint32_t rs1_val, uint32_t rs2_val) {
     );
 }
 
-int main(void) {
-    int a_nnz = count_lines("mat_32_0.9_a_val.hex");
-    int n_cols = 32;
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        printf("Error: Expected 1 argument, test data prefix\n");
+        return 0;
+    }
+    
+    char* prefix = argv[0];
+    int n_cols = atoi(argv[1]);
 
-    int a_val[a_nnz];
-    int a_col[a_nnz];
-    int a_row[n_cols + 1];
-    int b[n_cols * n_cols];
-    int c[n_cols * n_cols];
-    int ref[n_cols * n_cols];
-
-    load_matrix(a_val, "mat_32_0.9_a_val.hex", a_nnz);
-    load_matrix(a_col, "mat_32_0.9_a_col.hex", a_nnz);
-    load_matrix(a_row, "mat_32_0.9_a_row.hex", n_cols + 1);
-    load_matrix(b, "mat_32_0.9_b.hex", n_cols * n_cols);
-    load_matrix(ref, "mat_32_0.9_ref.hex", n_cols * n_cols);
-
+    char a_val_path[100] = "";
+    snprintf(a_val_path, sizeof(a_val_path), "%s%s", prefix, "_a_val.hex");
+    
+    int a_nnz = count_lines(a_val_path);
+    
+    int* a_val = load_matrix(a_nnz, prefix, "_a_val.hex");
+    int* a_col = load_matrix(a_nnz, prefix, "_a_col.hex");
+    int* a_row = load_matrix(n_cols + 1, prefix, "_a_row.hex");
+    int* b = load_matrix(n_cols * n_cols, prefix, "_b.hex");
+    int* ref = load_matrix(n_cols * n_cols, prefix, "_ref.hex");
+    
+    // MST writes 4 rows, so we need to allocate 3 extra rows so the last MST doesnt overwrite the buffer
+    int* c = malloc((n_cols + 3) * n_cols * sizeof(int));
+    // Init result matrix to zero
+    memset(c, 0, (n_cols + 3) * n_cols * sizeof(int));
+    
     int sparse_reg = 0;
     int dense_regs[2] = {1, 2};
     int acc_regs[4] = {4, 5, 6, 7};
@@ -76,7 +92,7 @@ int main(void) {
         // Skip empty rows
         if (a_row[row_idx] == a_row[row_idx + 1]) {
             continue;
-        } 
+        }
 
         for (int col_tile_start = 0; col_tile_start < n_cols / 4; col_tile_start += 4) {
             int tiles_in_group = n_cols / 4 - col_tile_start;
@@ -120,10 +136,18 @@ int main(void) {
     int fail = 0;
     for (int i = 0; i < n_cols * n_cols; i++) {
         if (c[i] != ref[i]) {
-            printf("mismatch at row=%d col=%d (i=%d): c=%d ref=%d\n", i / n_cols, i % n_cols, i, c[i], ref[i]);
+            printf("mismatch at row=%d col=%d: result=%d expected=%d\n", i / n_cols, i % n_cols, c[i], ref[i]);
             fail = 1;
         }
     }
+
+    free(a_val);
+    free(a_col);
+    free(a_row);
+    free(b);
+    free(c);
+    free(ref);
+
     if (fail) {
         printf("FAIL, Matrix doesnt match refernce\n");
         return 1;
