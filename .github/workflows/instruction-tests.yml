@@ -38,7 +38,7 @@ jobs:
         echo "GCC=riscv-none-elf" >> "$GITHUB_ENV"
 
     - name: Verify toolchain
-      run: ${RISCV} --version
+      run: ${RISCV}/${GCC} --version
 
     - name: Build and run instruction tests
       run: |
