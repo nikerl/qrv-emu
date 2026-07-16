@@ -35,7 +35,7 @@ jobs:
       run: |
         echo "/opt/riscv/bin" >> "$GITHUB_PATH"
         echo "RISCV=/opt/riscv/bin" >> "$GITHUB_ENV"
-        echo "GCC=riscv-none-elf" >> "$GITHUB_ENV"
+        echo "GCC=riscv-none-elf-gcc" >> "$GITHUB_ENV"
 
     - name: Verify toolchain
       run: ${RISCV}/${GCC} --version
