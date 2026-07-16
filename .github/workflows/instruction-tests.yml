@@ -9,7 +9,6 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RISCV_TOOLCHAIN_URL: https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v15.2.0-1/xpack-riscv-none-elf-gcc-15.2.0-1-linux-x64.tar.gz
-  RISCV_PREFIX: riscv-none-elf
 
 jobs:
   build:
@@ -35,7 +34,8 @@ jobs:
     - name: Add toolchain to PATH and env
       run: |
         echo "/opt/riscv/bin" >> "$GITHUB_PATH"
-        echo "RISCV=/opt/riscv/bin/${RISCV_PREFIX}-gcc" >> "$GITHUB_ENV"
+        echo "RISCV=/opt/riscv/bin" >> "$GITHUB_ENV"
+        echo "GCC=riscv-none-elf" >> "$GITHUB_ENV"
 
     - name: Verify toolchain
       run: ${RISCV} --version

@@ -6,7 +6,8 @@ ifeq (,$(filter -j% --jobs=% --jobs% --jobserver%,$(MAKEFLAGS)))
 endif
 
 RISCV ?= /opt/riscv/bin
-gcc = riscv32-unknown-elf-gcc
+GCC ?= riscv32-unknown-elf-gcc
+
 EXECUTABLE_PATH := target/debug/qrv-emu
 INCLUDE := validation/include
 RV32IM_TESTS := validation/rv32im-tests
@@ -31,7 +32,7 @@ run:
 
 build-test:
 	@mkdir -p $(TEST_BINS)
-	$(RISCV)/$(gcc) \
+	$(RISCV)/$(GCC) \
 		-march=rv32im -mabi=ilp32 \
 		-I $(INCLUDE) \
 		-nostdlib -nostartfiles \
@@ -55,7 +56,7 @@ run-test:
 
 build-program:
 	@mkdir -p $(TEST_BINS)
-	$(RISCV)/$(gcc) \
+	$(RISCV)/$(GCC) \
 		-march=rv32im -mabi=ilp32 \
 		-I $(INCLUDE) \
 		-o $(TEST_BINS)/$(PROGRAM).elf \
@@ -72,7 +73,7 @@ run-program:
 
 define CLANGD_CONFIG
 CompileFlags:
-  Compiler: $(RISCV)/$(gcc)
+  Compiler: $(RISCV)/$(GCC)
   Add:
     - -march=rv32im
     - -mabi=ilp32
