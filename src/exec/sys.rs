@@ -8,8 +8,8 @@ use std::{
         File,
         OpenOptions
     }, io::{
-        self, Read
-    }, process::exit, time::{Duration, Instant, SystemTime}
+        self, Read, Write
+    }, process::exit, time::SystemTime
 };
 
 use crate::{
@@ -93,19 +93,26 @@ impl ExecutionUnit for Sys {
                         let fd = regs[A0];
                         let str_ptr = regs[A1];
                         let str_len = regs[12];
+
+                        let mut str: String = "".to_string();
                         for i in 0..str_len {
-                            if fd == 1 { // stdout
-                                print!("{}", mem.load_byte((str_ptr + i) as usize) as char);
-                            }
-                            else if fd == 2 { // stderr
-                                eprint!("{}", mem.load_byte((str_ptr + i) as usize) as char);
-                            }
-                            else {println!("Unhandled write to fd: {}", fd)} // TODO
+                            str = format!("{}{}", str, mem.load_byte((str_ptr + i) as usize) as char)
+                        }
+
+                        if fd == 1 { // stdout
+                            print!("{}", str);
+                        }
+                        else if fd == 2 { // stderr
+                            eprint!("{}", str);
+                        }
+                        else { // file
+                            let f = &mut file_table.files.get(&(fd as i32)).unwrap();
+                            f.write_all(&str.as_bytes()).expect("Can't write to fd");
                         }
                         regs[A0] = str_len;
                     }
 
-                    80 => { // fstat: zero the struct, mark as char device (tty-like), return 0
+                    80 => { // fstat
                         let buf_ptr = regs[A1] as usize;
                         for i in 0..88 {
                             mem.store_byte(buf_ptr + i, 0);
