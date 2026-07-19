@@ -4,8 +4,9 @@
 // Author: Nik Erlandsson
 
 use crate::{
-    instruction_set::Instruction,
-    system::SystemState
+    instruction_set::Instruction, 
+    system::SystemState, 
+    trap::TrapCause
 };
 
 pub mod alu;
@@ -21,5 +22,5 @@ pub mod sys;
 /// 
 /// Only applicable for branch and jump type instructions, all others should return false
 pub trait ExecutionUnit {
-    fn execute(instr: Instruction, state: &mut SystemState) -> bool;
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause>;
 }

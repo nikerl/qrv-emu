@@ -9,13 +9,14 @@ use crate::{
         InstructionSet::*
     }, 
     exec::ExecutionUnit,
-    system::SystemState
+    system::SystemState,
+    trap::TrapCause
 };
 
 pub struct MatrixMultiply;
 
 impl ExecutionUnit for MatrixMultiply {
-    fn execute(instr: Instruction, state: &mut SystemState) -> bool {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
         let mrf = &mut state.mrf;
 
         let ms1 = instr.ms1 as usize;
@@ -39,9 +40,9 @@ impl ExecutionUnit for MatrixMultiply {
                     }
                 }
             }
-            _ => println!("Unrecognized opcode")
+            _ => unreachable!("Decoder guarantees valid instructions")
         }
 
-        return false;
+        return Ok(false);
     }
 }

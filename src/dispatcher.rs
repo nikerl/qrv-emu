@@ -3,10 +3,9 @@
 //
 // Author: Nik Erlandsson
 
-use std::process::exit;
-
 use crate::{
     system::SystemState,
+    trap::TrapCause,
     instruction_set::{
         InstrType, 
         Instruction,
@@ -26,7 +25,7 @@ use crate::{
 
 
 /// Returns bool: branch taken (true), or not taken (false)
-pub fn dispatch(instruction: Instruction, state: &mut SystemState) -> bool {
+pub fn dispatch(instruction: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
     match instruction.instr_type {
         InstrType::RType => {
             return Alu::execute(instruction, state);
@@ -37,7 +36,7 @@ pub fn dispatch(instruction: Instruction, state: &mut SystemState) -> bool {
                 LB | LH | LW | LBU | LHU => return Lsu::execute(instruction, state),
                 JALR => return Jump::execute(instruction, state),
                 ECALL | EBREAK | FENCE => return Sys::execute(instruction, state),
-                _ => {println!("Unrecognized opcode"); exit(1)}
+                _ => unreachable!("Decoder guarantees valid instructions")
             }
         }
         InstrType::SType => {
@@ -56,7 +55,7 @@ pub fn dispatch(instruction: Instruction, state: &mut SystemState) -> bool {
             match instruction.opcode {
                 MMASAW | SPMACW => return MatrixMultiply::execute(instruction, state),
                 MZERO | MLDW | MSTW | SPLDW | DLDW => return MatrixLSU::execute(instruction, state),
-                _ => {println!("Unrecognized opcode"); exit(1)}
+                _ => unreachable!("Decoder guarantees valid instructions")
             }
         }
     }

@@ -10,13 +10,14 @@ use crate::{
         InstructionSet::*
     }, 
     exec::ExecutionUnit,
-    system::SystemState
+    system::SystemState,
+    trap::TrapCause
 };
 
 pub struct Alu;
 
 impl ExecutionUnit for Alu {
-    fn execute(instr: Instruction, state: &mut SystemState) -> bool {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
         let regs = &mut state.srf;
 
         let im1 = instr.im1;
@@ -87,9 +88,9 @@ impl ExecutionUnit for Alu {
             SLTIU => if regs[rs1] < (im1 as u32) {regs[rd] = 1} else {regs[rd] = 0},
             LUI => regs[rd] = im1 as u32,
             AUIPC => regs[rd] = regs[PC].wrapping_add(im1 as u32),
-            _ => println!("Unrecognized opcode")
+            _ => unreachable!("Decoder guarantees valid instructions")
         }
         
-        return false;
+        return Ok(false);
     }
 }

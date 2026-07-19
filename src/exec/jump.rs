@@ -10,14 +10,15 @@ use crate::{
         InstructionSet::*
     }, 
     exec::ExecutionUnit,
-    system::SystemState
+    system::SystemState,
+    trap::TrapCause
 };
 
 pub struct Jump;
 
 // unconditional jump, return true
 impl ExecutionUnit for Jump {
-    fn execute(instr: Instruction, state: &mut SystemState) -> bool {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
         let regs = &mut state.srf;
 
         let offset = instr.im1;
@@ -33,9 +34,9 @@ impl ExecutionUnit for Jump {
                 regs[rd] = regs[PC].wrapping_add(4);
                 regs[PC] = ((regs[rs1] as i32).wrapping_add(offset) as u32) & !1;
             }
-            _ => println!("Unrecognized opcode")
+            _ => unreachable!("Decoder guarantees valid instructions")
         }
 
-        return true;
+        return Ok(true);
     }
 }

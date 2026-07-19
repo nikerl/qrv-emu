@@ -19,13 +19,14 @@ use crate::{
         InstructionSet::*
     }, 
     exec::ExecutionUnit,
-    system::SystemState
+    system::SystemState,
+    trap::TrapCause
 };
 
 pub struct Sys;
 
 impl ExecutionUnit for Sys {
-    fn execute(instr: Instruction, state: &mut SystemState) -> bool {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
         let mem = &mut state.mem;
         let regs = &mut state.srf;
         let file_table = &mut state.file_table;
@@ -51,7 +52,7 @@ impl ExecutionUnit for Sys {
                                     0 => SeekFrom::Start(offset as u64),   // SEEK_SET
                                     1 => SeekFrom::Current(offset as i64), // SEEK_CUR
                                     2 => SeekFrom::End(offset as i64),     // SEEK_END
-                                    _ => { regs[A0] = -1i32 as u32; return false; }
+                                    _ => { regs[A0] = -1i32 as u32; return Ok(false); }
                                 };
                                 match file.seek(seek_from) {
                                     Ok(pos) => regs[A0] = pos as u32,
@@ -74,14 +75,14 @@ impl ExecutionUnit for Sys {
                         else {
                             match file_table.files.get_mut(&(fd as i32)) {
                                 Some(file) => file.read(&mut buf),
-                                None => { regs[A0] = -1i32 as u32; return false; } // adjust to your actual control flow
+                                None => { regs[A0] = -1i32 as u32; return Ok(false); } // adjust to your actual control flow
                             }
                         };
                         
                         match bytes_read {
                             Ok(n) => {
                                 for i in 0..n {
-                                    mem.store_byte((str_ptr as usize) + i, buf[i]);
+                                    mem.store_byte((str_ptr as usize) + i, buf[i])?;
                                 }
                                 regs[A0] = n as u32;
                             }
@@ -96,7 +97,7 @@ impl ExecutionUnit for Sys {
 
                         let mut str: String = "".to_string();
                         for i in 0..str_len {
-                            str = format!("{}{}", str, mem.load_byte((str_ptr + i) as usize) as char)
+                            str = format!("{}{}", str, mem.load_byte((str_ptr + i) as usize)? as char)
                         }
 
                         if fd == 1 { // stdout
@@ -115,10 +116,10 @@ impl ExecutionUnit for Sys {
                     80 => { // fstat
                         let buf_ptr = regs[A1] as usize;
                         for i in 0..88 {
-                            mem.store_byte(buf_ptr + i, 0);
+                            mem.store_byte(buf_ptr + i, 0)?;
                         }
                         let s_ifchr: u32 = 0o020000;
-                        mem.store_word(buf_ptr + 4, s_ifchr); // st_mode
+                        mem.store_word(buf_ptr + 4, s_ifchr)?; // st_mode
                         regs[A0] = 0;
                     }
 
@@ -144,19 +145,18 @@ impl ExecutionUnit for Sys {
                                 .duration_since(SystemTime::UNIX_EPOCH)
                                 .unwrap();
 
-                            mem.store_word(tp_addr, time.as_secs() as u32);
-                            mem.store_word(tp_addr + 4, time.subsec_nanos() as u32);
+                            mem.store_word(tp_addr, time.as_secs() as u32)?;
+                            mem.store_word(tp_addr + 4, time.subsec_nanos() as u32)?;
 
                             regs[A0] = 0;
                         }
-                        else {
-                            println!("Unrecognized clock id {}", clk_id);
+                        else { // Unrecognized clk_id
                             regs[A0] = -1i32 as u32;
                         }
                     }
 
                     1024 => { // open
-                        let file_path: String = mem.load_str(regs[A0] as usize);
+                        let file_path: String = mem.load_str(regs[A0] as usize)?;
                         let flags: u32 = regs[A1];
 
                         let is_write = (flags & 0x3) != 0;
@@ -181,14 +181,14 @@ impl ExecutionUnit for Sys {
                             regs[A0] = file_table.insert(open_file.unwrap()) as u32;
                         }
                     }
-                    _ => println!("Unhandled syscall: {}", syscall_num)
+                    _ => return Err(TrapCause::UnhandledSyscall{ num: syscall_num })
                 } 
             }
             EBREAK => println!("EBREAK hit at pc {:#x}", regs[PC]),
-            FENCE => return false, // not relevant 
-            _ => println!("Unrecognized opcode")
+            FENCE => return Ok(false), // not relevant 
+            _ => unreachable!("Decoder guarantees valid instructions")
         }
 
-        return false;
+        return Ok(false);
     }
 }

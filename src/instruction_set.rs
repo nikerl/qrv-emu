@@ -110,28 +110,67 @@ pub struct Instruction {
     pub rd: u8,
     pub ms1: u8,
     pub ms2: u8,
-    pub md: u8
+    pub md: u8,
+    pub raw_i: u32
 }
 impl Instruction {
-    pub fn new_r_type(opcode: InstructionSet, rs1: u8, rs2: u8, rd: u8) -> Self {
-        Instruction { instr_type: InstrType::RType, opcode, im1: 0, im2: 0, rs1, rs2, rd, ms1: 0, ms2: 0, md: 0 }
+    pub fn new_r_type(opcode: InstructionSet, rs1: u8, rs2: u8, rd: u8, raw_i: u32) -> Self {
+        Instruction { instr_type: InstrType::RType, opcode, im1: 0, im2: 0, rs1, rs2, rd, ms1: 0, ms2: 0, md: 0, raw_i }
     }
-    pub fn new_i_type(opcode: InstructionSet, im1: i32, rs1: u8, rd: u8) -> Self {
-        Instruction { instr_type: InstrType::IType, opcode, im1, im2: 0, rs1, rs2: 0, rd, ms1: 0, ms2: 0, md: 0 }
+    pub fn new_i_type(opcode: InstructionSet, im1: i32, rs1: u8, rd: u8, raw_i: u32) -> Self {
+        Instruction { instr_type: InstrType::IType, opcode, im1, im2: 0, rs1, rs2: 0, rd, ms1: 0, ms2: 0, md: 0, raw_i }
     }
-    pub fn new_s_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8) -> Self {
-        Instruction { instr_type: InstrType::SType, opcode, im1, im2: 0, rs1, rs2, rd: 0, ms1: 0, ms2: 0, md: 0 }
+    pub fn new_s_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8, raw_i: u32) -> Self {
+        Instruction { instr_type: InstrType::SType, opcode, im1, im2: 0, rs1, rs2, rd: 0, ms1: 0, ms2: 0, md: 0, raw_i }
     }
-    pub fn new_b_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8) -> Self {
-        Instruction { instr_type: InstrType::BType, opcode, im1, im2: 0, rs1, rs2, rd: 0, ms1: 0, ms2: 0, md: 0 }
+    pub fn new_b_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8, raw_i: u32) -> Self {
+        Instruction { instr_type: InstrType::BType, opcode, im1, im2: 0, rs1, rs2, rd: 0, ms1: 0, ms2: 0, md: 0, raw_i }
     }
-    pub fn new_u_type(opcode: InstructionSet, im1: i32, rd: u8) -> Self {
-        Instruction { instr_type: InstrType::UType, opcode, im1, im2: 0, rs1: 0, ms2: 0, rd, rs2: 0, ms1: 0, md: 0}
+    pub fn new_u_type(opcode: InstructionSet, im1: i32, rd: u8, raw_i: u32) -> Self {
+        Instruction { instr_type: InstrType::UType, opcode, im1, im2: 0, rs1: 0, ms2: 0, rd, rs2: 0, ms1: 0, md: 0, raw_i}
     }
-    pub fn new_j_type(opcode: InstructionSet, im1: i32, rd: u8) -> Self {
-        Instruction { instr_type: InstrType::JType, opcode, im1, im2: 0, rs1: 0, ms2: 0, rd, rs2: 0, ms1: 0, md: 0}
+    pub fn new_j_type(opcode: InstructionSet, im1: i32, rd: u8, raw_i: u32) -> Self {
+        Instruction { instr_type: InstrType::JType, opcode, im1, im2: 0, rs1: 0, ms2: 0, rd, rs2: 0, ms1: 0, md: 0, raw_i}
     }
-    pub fn new_mm_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8, ms1: u8, ms2: u8, md: u8) -> Self {
-        Instruction { instr_type: InstrType::MMType, opcode, im1, im2: 0, rs1, rs2, rd: 0, ms1, ms2, md}
+    pub fn new_mm_type(opcode: InstructionSet, im1: i32, rs1: u8, rs2: u8, ms1: u8, ms2: u8, md: u8, raw_i: u32) -> Self {
+        Instruction { instr_type: InstrType::MMType, opcode, im1, im2: 0, rs1, rs2, rd: 0, ms1, ms2, md, raw_i}
+    }
+}
+impl Default for Instruction {
+    fn default() -> Self {
+        Instruction { instr_type: InstrType::IType, opcode: InstructionSet::ADDI, im1: 0, im2: 0, rs1: 0, rs2: 0, rd: 0, ms1: 0, ms2: 0, md: 0, raw_i: 0 }
+    }
+}
+
+/// Circular buffer for storing the most recently decoded instructions.
+/// 
+/// The buffer is a fixed size vector of tuples of (PC, Instruction).
+/// 
+/// When the buffer fills up it will overwrite the oldest entries.
+pub struct InstrBuffer {
+    buffer: Vec<(u32, Instruction)>,
+    write_ptr: usize,
+    size: usize,
+}
+impl InstrBuffer {
+    pub fn new(size: usize) -> Self {
+        if size == 0 {
+            panic!("Size should be greater than zero")
+        }
+        InstrBuffer { buffer: vec![(0, Instruction::default()); size], write_ptr: 0, size }
+    }
+    pub fn push(&mut self, pc: u32, instruction: &Instruction) {
+        self.buffer[self.write_ptr] = (pc, instruction.clone());
+        self.write_ptr = (self.write_ptr + 1) % self.size;
+    }
+
+    pub fn dump(&self) -> String {
+        let mut output: String = format!("{:<10}   {:<6}   {:<34}\n", "PC", "Opcode", "Raw Instruction Word");
+        for i in 0..self.size {
+            let index = (self.write_ptr + i) % self.size;
+            output.push_str(&format!("0x{:08x} | {:<6} | 0b{:032b}\n", self.buffer[index].0, format!("{:?}", self.buffer[index].1.opcode), self.buffer[index].1.raw_i));
+        }
+
+        return output;
     }
 }

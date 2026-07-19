@@ -9,14 +9,15 @@ use crate::{
         InstructionSet::*
     }, 
     exec::ExecutionUnit,
-    system::SystemState
+    system::SystemState,
+    trap::TrapCause
 };
 
 
 pub struct MatrixLSU;
 
 impl ExecutionUnit for MatrixLSU {
-    fn execute(instr: Instruction, state: &mut SystemState) -> bool {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
         let mem = &mut state.mem;
         let srf = &mut state.srf;
         let mrf = &mut state.mrf;
@@ -38,20 +39,20 @@ impl ExecutionUnit for MatrixLSU {
             }
             MLDW => {
                 for i in 0..4u32 {
-                    mrf[md][i as usize] = mem.load_128b((base_addr + i*stride) as usize);
+                    mrf[md][i as usize] = mem.load_128b((base_addr + i*stride) as usize)?;
                 }
                 println!("{:?}", mrf[md]);
             }
             MSTW => {
                 for i in 0..4u32 {
-                    mem.store_128b((base_addr + i*stride) as usize, mrf[ms1][i as usize]);
+                    mem.store_128b((base_addr + i*stride) as usize, mrf[ms1][i as usize])?;
                 }
             }
             SPLDW => {
                 for i in 0..4u32 {
                     if i < nnz {
-                        mrf[md][0][i as usize] = mem.load_word((csr_val_base + i*4) as usize) as i32; // csr val
-                        mrf[md][1][i as usize] = mem.load_word((csr_col_base + i*4) as usize) as i32; // csr col
+                        mrf[md][0][i as usize] = mem.load_word((csr_val_base + i*4) as usize)? as i32; // csr val
+                        mrf[md][1][i as usize] = mem.load_word((csr_col_base + i*4) as usize)? as i32; // csr col
                     } else {
                         mrf[md][0][i as usize] = 0;
                         mrf[md][1][i as usize] = 0;
@@ -60,12 +61,12 @@ impl ExecutionUnit for MatrixLSU {
             }
             DLDW => {
                 for i in 0..4u32 {
-                    mrf[md][i as usize] = mem.load_128b((base_addr + (mrf[ms1][1][i as usize] as u32) * stride) as usize)
+                    mrf[md][i as usize] = mem.load_128b((base_addr + (mrf[ms1][1][i as usize] as u32) * stride) as usize)?
                 }
             }
-            _ => println!("Unrecognized opcode")
+            _ => unreachable!("Decoder guarantees valid instructions")
         }
         
-        return false;
+        return Ok(false);
     }
 }

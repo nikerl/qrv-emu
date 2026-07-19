@@ -91,10 +91,10 @@ impl IndexMut<RegNames> for ScalarRF {
 
 impl fmt::Display for ScalarRF {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for i in 0..32 {
-            writeln!(f, "x{}: {}", i, self.rf[i])?;
+        for i in 0..16 {
+            writeln!(f, "x{:<2}: 0x{:08x}        x{}: 0x{:08x}", i, self.rf[i], i+16, self.rf[i+16])?;
         }
-        writeln!(f, "pc: {}", self.pc)?;
+        writeln!(f, "pc: 0x{:08x}", self.pc)?;
         Ok(())
     }
 }

@@ -9,11 +9,12 @@ use elf::{
 };
 
 use crate::{
-    system::SystemState,
-    data::rf_scalar::RegNames::*
+    data::rf_scalar::RegNames::*, 
+    system::SystemState, 
+    trap::TrapCause
 };
 
-pub fn setup_args(args: &[String], state: &mut SystemState) {
+pub fn setup_args(args: &[String], state: &mut SystemState) -> Result<(), TrapCause> {
     let mem = &mut state.mem;
     let srf = &mut state.srf;
 
@@ -25,9 +26,9 @@ pub fn setup_args(args: &[String], state: &mut SystemState) {
     for arg in args {
         str_addr_array.push(addr);
         for (i, byte) in arg.bytes().enumerate() {
-            mem.store_byte((addr + i as u32) as usize, byte);
+            mem.store_byte((addr + i as u32) as usize, byte)?;
         }
-        mem.store_byte((addr + arg.len() as u32) as usize, 0); // null terminator
+        mem.store_byte((addr + arg.len() as u32) as usize, 0)?; // null terminator
         addr += arg.len() as u32 + 1;
     }
 
@@ -36,16 +37,18 @@ pub fn setup_args(args: &[String], state: &mut SystemState) {
     // leaving the program a real stack area that can't grow back into them.
     let new_sp = (srf[SP] - 8192) & !15; // 16-byte align per the RISC-V ABI
 
-    mem.store_word(new_sp as usize, argc);
+    mem.store_word(new_sp as usize, argc)?;
     for (i, &str_addr) in str_addr_array.iter().enumerate() {
-        mem.store_word((new_sp + 4 + i as u32 * 4) as usize, str_addr);
+        mem.store_word((new_sp + 4 + i as u32 * 4) as usize, str_addr)?;
     }
-    mem.store_word((new_sp + 4 + str_addr_array.len() as u32 * 4) as usize, 0); // argv null terminator
+    mem.store_word((new_sp + 4 + str_addr_array.len() as u32 * 4) as usize, 0)?; // argv null terminator
 
     srf[SP] = new_sp;
+
+    return Ok(())
 }
 
-pub fn load_bin(path_str: String, state: &mut SystemState) {
+pub fn load_bin(path_str: String, state: &mut SystemState) -> Result<(), TrapCause> {
     let mem = &mut state.mem;
     let srf = &mut state.srf;
 
@@ -78,7 +81,9 @@ pub fn load_bin(path_str: String, state: &mut SystemState) {
 
         // copy file bytes into memory at vaddr
         for i in 0..filesz {
-            mem.store_byte(vaddr + i, file_data[offset + i]);
+            mem.store_byte(vaddr + i, file_data[offset + i])?;
         }
     }
+
+    return Ok(());
 }

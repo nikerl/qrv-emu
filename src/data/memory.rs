@@ -7,16 +7,25 @@ use std::{
     ops::{
         Index, 
         IndexMut
-    }, 
-    process::exit
+    }, process::exit
 };
 
-const MEM_SIZE: usize = 0x004F_FFFF; // Memory size in bytes
+use crate::{
+    data::memory::AccessType::*, 
+    trap::TrapCause
+};
+
+const MEM_SIZE: usize = 0x004F_FFFF; // Memory size in bytes, ~5.2MB
 
 pub const TOHOST_ADDR: usize = 0x1000_0000;
 pub const  IO_WRITE_ADDR: usize = 0x1000_1000;
 pub const  RVMODEL_HALT_PASS: u32 = 1;
 pub const  RVMODEL_HALT_FAIL: u32 = 3;
+
+pub enum AccessType{
+    LOAD,
+    STORE
+}
 
 pub struct Memory {
     mem: Vec<u8>,
@@ -39,22 +48,25 @@ impl Memory {
             exit(1);
         }
     }
-
     
-    pub fn translate_vaddr(&self, vaddr: usize) -> usize {
+    pub fn translate_vaddr(&self, vaddr: usize, atype: AccessType) -> Result<usize, TrapCause> {
         let addr: usize = ((vaddr as u32) - self.base_addr) as usize;
         if addr >= MEM_SIZE as usize {
-            panic!("Memory access out of bounds: vaddr {:#x} (translated {:#x})", vaddr, addr);
+            match atype { // Memory access out of bounds
+                LOAD => return Err(TrapCause::LoadAccessFault{ vaddr: vaddr, real_addr: addr }),
+                STORE => return Err(TrapCause::StoreAccessFault{ vaddr: vaddr, real_addr: addr }),
+            }
         }
-        return addr;
+        
+        return Ok(addr);
     }
     
     /// Loads a null-terminated string from an address in memory
-    pub fn load_str(&self, vaddr: usize) -> String {
+    pub fn load_str(&self, vaddr: usize) -> Result<String, TrapCause> {
         let mut result: String = "".to_string();
         let mut index: usize = 0;
         loop {
-            let c = self.load_byte(vaddr + index) as char;
+            let c = self.load_byte(vaddr + index)? as char;
             if c == '\0' {
                 break;
             }
@@ -62,59 +74,80 @@ impl Memory {
             index += 1;
         }
 
-        return result;
+        return Ok(result);
     }
-    pub fn load_128b(&self, addr: usize) -> [i32; 4] {
+    pub fn load_128b(&self, addr: usize) -> Result<[i32; 4], TrapCause> {
         let mut line: [i32; 4] = [0; 4];
-        line[0] = self.load_word(addr) as i32;
-        line[1] = self.load_word(addr + 4) as i32;
-        line[2] = self.load_word(addr + 8) as i32;
-        line[3] = self.load_word(addr + 12) as i32;
+        line[0] = self.load_word(addr)? as i32;
+        line[1] = self.load_word(addr + 4)? as i32;
+        line[2] = self.load_word(addr + 8)? as i32;
+        line[3] = self.load_word(addr + 12)? as i32;
 
-        return line;
+        return Ok(line);
     }
-    pub fn store_128b(&mut self, addr: usize, line: [i32; 4]) {
-        self.store_word(addr, line[0] as u32);
-        self.store_word(addr + 4, line[1] as u32);
-        self.store_word(addr + 8, line[2] as u32);
-        self.store_word(addr + 12, line[3] as u32);
+    pub fn store_128b(&mut self, addr: usize, line: [i32; 4]) -> Result<(), TrapCause> {
+        self.store_word(addr, line[0] as u32)?;
+        self.store_word(addr + 4, line[1] as u32)?;
+        self.store_word(addr + 8, line[2] as u32)?;
+        self.store_word(addr + 12, line[3] as u32)?;
+
+        return Ok(());
     }
-    pub fn load_word(&self, addr: usize) -> u32 {
-        let addr = self.translate_vaddr(addr);
-        return (self.mem[addr + 3] as u32) << 24 | (self.mem[addr + 2] as u32) << 16 | (self.mem[addr + 1] as u32) << 8 | self.mem[addr] as u32;
+    pub fn load_word(&self, vaddr: usize) -> Result<u32, TrapCause> {
+        if (vaddr % 4) != 0 {
+            return Err(TrapCause::MisalignedLoad{ vaddr: vaddr });
+        }
+        let addr = self.translate_vaddr(vaddr, LOAD)?;
+        return Ok((self.mem[addr + 3] as u32) << 24 | (self.mem[addr + 2] as u32) << 16 | (self.mem[addr + 1] as u32) << 8 | self.mem[addr] as u32);
     }
-    pub fn store_word(&mut self, addr: usize, word: u32) {
-        if addr == TOHOST_ADDR { // Intercept writes to host
+    pub fn store_word(&mut self, vaddr: usize, word: u32) -> Result<(), TrapCause> {
+        if vaddr == TOHOST_ADDR { // Intercept writes to host
             self.to_host(word);
-            return;
+            return Ok(());
         }
-        else if addr == IO_WRITE_ADDR { // Intercepts IO writes
+        else if vaddr == IO_WRITE_ADDR { // Intercepts IO writes
             print!("{}", word as u8 as char);
-            return;
+            return Ok(());
         }
 
-        let addr = self.translate_vaddr(addr);
+        if (vaddr % 4) != 0 {
+            return Err(TrapCause::MisalignedStore{ vaddr: vaddr });
+        }
+        let addr = self.translate_vaddr(vaddr, STORE)?;
+
         self.mem[addr] = word as u8;
         self.mem[addr + 1] = (word >> 8) as u8;
         self.mem[addr + 2] = (word >> 16) as u8;
         self.mem[addr + 3] = (word >> 24) as u8;
+
+        return Ok(());
     }
-    pub fn load_half(&self, addr: usize) -> u16 {
-        let addr = self.translate_vaddr(addr);
-        return (self.mem[addr + 1] as u16) << 8 | self.mem[addr] as u16;
+    pub fn load_half(&self, vaddr: usize) -> Result<u16, TrapCause> {
+        if (vaddr % 2) != 0 {
+            return Err(TrapCause::MisalignedLoad{ vaddr: vaddr });
+        }
+        let addr = self.translate_vaddr(vaddr, LOAD)?;
+        return Ok((self.mem[addr + 1] as u16) << 8 | self.mem[addr] as u16);
     }
-    pub fn store_half(&mut self, addr: usize, half: u16) {
-        let addr = self.translate_vaddr(addr);
+    pub fn store_half(&mut self, vaddr: usize, half: u16) -> Result<(), TrapCause> {
+        if (vaddr % 2) != 0 {
+            return Err(TrapCause::MisalignedStore{ vaddr: vaddr });
+        }
+        let addr = self.translate_vaddr(vaddr, STORE)?;
         self.mem[addr] = half as u8;
         self.mem[addr + 1] = (half >> 8) as u8;
+
+        return Ok(());
     }
-    pub fn load_byte(&self, addr: usize) -> u8 {
-        let addr = self.translate_vaddr(addr);
-        return self.mem[addr] as u8;
+    pub fn load_byte(&self, vaddr: usize) -> Result<u8, TrapCause> {
+        let addr = self.translate_vaddr(vaddr, LOAD)?;
+        return Ok(self.mem[addr] as u8);
     }
-    pub fn store_byte(&mut self, addr: usize, byte: u8) {
-        let addr = self.translate_vaddr(addr);
+    pub fn store_byte(&mut self, vaddr: usize, byte: u8) -> Result<(), TrapCause> {
+        let addr = self.translate_vaddr(vaddr, STORE)?;
         self.mem[addr] = byte as u8;
+
+        return Ok(());
     }
 
     pub fn len(&self) -> u32 {
@@ -122,8 +155,8 @@ impl Memory {
     }
 
     #[allow(dead_code)]
-    pub fn examine(&self, location: u32, num_words: u32) -> String{
-        let location: u32 = self.translate_vaddr(location as usize) as u32;
+    pub fn examine(&self, location: u32, num_words: u32) -> Result<String, TrapCause> {
+        let location: u32 = self.translate_vaddr(location as usize, LOAD)? as u32;
         let mut output: String = "".to_owned();
         for i in 0..num_words {
             output.push_str(
@@ -136,20 +169,18 @@ impl Memory {
                 )
             );
         }
-        return output;
+        return Ok(output);
     }
 }
 
 impl Index<usize> for Memory {
     type Output = u8;
     fn index(&self, i: usize) -> &u8 {
-        let i = self.translate_vaddr(i);
-        &self.mem[i]
+        &self.mem[i] // real address, panics on OOB via normal array bounds check
     }
 }
 impl IndexMut<usize> for Memory {
     fn index_mut(&mut self, i: usize) -> &mut u8 {
-        let i = self.translate_vaddr(i);
-        &mut self.mem[i]
+        &mut self.mem[i] // real address, panics on OOB via normal array bounds check
     }
 }

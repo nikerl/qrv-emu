@@ -4,6 +4,7 @@
 // Author: Nik Erlandsson
 
 use crate::{
+    trap::TrapCause,
     instruction_set::{
         Instruction,
         InstructionSet
@@ -31,7 +32,7 @@ fn sign_immediate(instruction: u32, im_start: u32, im_length: u32, signed: bool)
 }
 
 
-fn parse_r_type(instruction: u32) -> Instruction {
+fn parse_r_type(instruction: u32) -> Result<Instruction, TrapCause> {
     let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
     let func7: u8 = ((instruction & FUNC7_MASK) >> 25) as u8;
 
@@ -43,35 +44,35 @@ fn parse_r_type(instruction: u32) -> Instruction {
                 0b000_0000 => operation = InstructionSet::ADD,
                 0b010_0000 => operation = InstructionSet::SUB,
                 0b000_0001 => operation = InstructionSet::MUL,
-                _ => panic!("Unrecognized func7 {:#02b}", func7)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
         0b001 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::SLL,
                 0b000_0001 => operation = InstructionSet::MULH,
-                _ => panic!("Unrecognized func7 {:#02b}", func7)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
         0b010 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::SLT,
                 0b000_0001 => operation = InstructionSet::MULHSU,
-                _ => panic!("Unrecognized func7 {:#02b}", func7)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
         0b011 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::SLTU,
                 0b000_0001 => operation = InstructionSet::MULHU,
-                _ => panic!("Unrecognized func7 {:#02b}", func7)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
         0b100 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::XOR,
                 0b000_0001 => operation = InstructionSet::DIV,
-                _ => panic!("Unrecognized func7 {:#02b}", func7)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
         0b101 => {
@@ -79,37 +80,38 @@ fn parse_r_type(instruction: u32) -> Instruction {
                 0b000_0000 => operation = InstructionSet::SRL,
                 0b010_0000 => operation = InstructionSet::SRA,
                 0b000_0001 => operation = InstructionSet::DIVU,
-                _ => panic!("Unrecognized func7 {:#02b}", func7)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
         0b110 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::OR,
                 0b000_0001 => operation = InstructionSet::REM,
-                _ => panic!("Unrecognized func7 {:#02b}", func7)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
         0b111 => {
             match func7 {
                 0b000_0000 => operation = InstructionSet::AND,
                 0b000_0001 => operation = InstructionSet::REMU,
-                _ => panic!("Unrecognized func7 {:#02b}", func7)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
-        _ => panic!("Unrecognized func3 {:#02b}", func3)
+        _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
     }
 
     let parsed_i = Instruction::new_r_type(
         operation,
         ((instruction >> 15) & 0b11111) as u8,
         ((instruction >> 20) & 0b11111) as u8,
-        ((instruction >> 7) & 0b11111) as u8
+        ((instruction >> 7) & 0b11111) as u8,
+        instruction
     );
 
-    return parsed_i;
+    return Ok(parsed_i);
 }
 
-fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
+fn parse_i_type(instruction: u32, major_opcode: u8) -> Result<Instruction, TrapCause> {
     let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
 
     let operation: InstructionSet;
@@ -140,12 +142,12 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
                             operation = InstructionSet::SRAI;
                             im1 = sign_immediate(instruction, 20, 5, false); // 5 bit immidiate
                         }
-                        _ => panic!("Unrecognized func7 {:#02b}", func7)
+                        _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
                     }
                 }
                 0b110 => operation = InstructionSet::ORI,
                 0b111 => operation = InstructionSet::ANDI,
-                _ => panic!("Unrecognized func3 {:#02b}", func3)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
         0b0000_0011 => {
@@ -155,7 +157,7 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
                 0b010 => operation = InstructionSet::LW,
                 0b100 => operation = InstructionSet::LBU,
                 0b101 => operation = InstructionSet::LHU,
-                _ => panic!("Unrecognized func3 {:#02b}", func3)
+                _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
             }
         }
         0b0110_0111 => operation = InstructionSet::JALR,
@@ -169,7 +171,7 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
             }
         }
         0b000_1111 => operation = InstructionSet::FENCE,
-        _ => panic!("Unrecognized opcode {:#02b}", major_opcode)
+        _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
 
     }
 
@@ -177,13 +179,14 @@ fn parse_i_type(instruction: u32, major_opcode: u8) -> Instruction {
         operation,
         im1,
         ((instruction >> 15) & 0b11111) as u8,
-        ((instruction >> 7) & 0b11111) as u8
+        ((instruction >> 7) & 0b11111) as u8,
+        instruction
     );
 
-    return parsed_i
+    return Ok(parsed_i)
 }
 
-fn parse_s_type(instruction: u32) -> Instruction {
+fn parse_s_type(instruction: u32) -> Result<Instruction, TrapCause> {
     let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
 
     // Connect the two immidiate fields by shifting up the lower one
@@ -196,7 +199,7 @@ fn parse_s_type(instruction: u32) -> Instruction {
         0b000 => operation = InstructionSet::SB,
         0b001 => operation = InstructionSet::SH,
         0b010 => operation = InstructionSet::SW,
-        _ => panic!("Unrecognized func3 {:#02b}", func3)
+        _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
 
     }
 
@@ -204,13 +207,14 @@ fn parse_s_type(instruction: u32) -> Instruction {
         operation,
         im1,
         ((instruction >> 15) & 0b11111) as u8,
-        ((instruction >> 20) & 0b11111) as u8
+        ((instruction >> 20) & 0b11111) as u8,
+        instruction
     );
 
-    return parsed_i
+    return Ok(parsed_i)
 }
 
-fn parse_b_type(instruction: u32) -> Instruction {
+fn parse_b_type(instruction: u32) -> Result<Instruction, TrapCause> {
     let func3: u8 = ((instruction & FUNC3_MASK) >> 12) as u8;
     
     let operation: InstructionSet;
@@ -229,20 +233,21 @@ fn parse_b_type(instruction: u32) -> Instruction {
         0b101 => operation = InstructionSet::BGE,
         0b110 => operation = InstructionSet::BLTU,
         0b111 => operation = InstructionSet::BGEU,
-        _ => panic!("Unrecognized func3 {:#02b}", func3)
+        _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
     }
 
     let parsed_i = Instruction::new_b_type(
         operation,
         im1,
         ((instruction >> 15) & 0b11111) as u8,
-        ((instruction >> 20) & 0b11111) as u8
+        ((instruction >> 20) & 0b11111) as u8,
+        instruction
     );
 
-    return parsed_i;
+    return Ok(parsed_i);
 }
 
-fn parse_u_type(instruction: u32, major_opcode: u8) -> Instruction {
+fn parse_u_type(instruction: u32, major_opcode: u8) -> Result<Instruction, TrapCause> {
     let operation: InstructionSet;
 
     let im1: i32 = (instruction & 0xFFFF_F000) as i32;
@@ -250,19 +255,20 @@ fn parse_u_type(instruction: u32, major_opcode: u8) -> Instruction {
     match major_opcode {
         0b011_0111 => operation = InstructionSet::LUI,
         0b001_0111 => operation = InstructionSet::AUIPC,
-        _ => panic!("Unrecognized opcode {:#02b}", major_opcode)
+        _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
     }
 
     let parsed_i = Instruction::new_u_type(
         operation,
         im1,
-        ((instruction >> 7) & 0b11111) as u8
+        ((instruction >> 7) & 0b11111) as u8,
+        instruction
     );
 
-    return parsed_i;
+    return Ok(parsed_i);
 }
 
-fn parse_j_type(instruction: u32) -> Instruction {    
+fn parse_j_type(instruction: u32) -> Result<Instruction, TrapCause> {    
     let operation= InstructionSet::JAL;
 
     let bit31 = (instruction >> 31) & 0b1;
@@ -275,13 +281,14 @@ fn parse_j_type(instruction: u32) -> Instruction {
     let parsed_i = Instruction::new_j_type(
         operation, 
         im1,
-        ((instruction >> 7) & 0b11111) as u8
+        ((instruction >> 7) & 0b11111) as u8,
+        instruction
     );
 
-    return parsed_i;
+    return Ok(parsed_i);
 }
 
-fn parse_mm_type(instruction: u32) -> Instruction {
+fn parse_mm_type(instruction: u32) -> Result<Instruction, TrapCause> {
     let func7: u8 = ((instruction & FUNC7_MASK) >> 27) as u8;
 
     let operation: InstructionSet;
@@ -335,15 +342,15 @@ fn parse_mm_type(instruction: u32) -> Instruction {
             ms1 = ((instruction >> 15) & 0b111) as u8;
             md = ((instruction >> 7) & 0b111) as u8
         }
-        _ => panic!("Unrecognized func7 {:#02b}", func7)
+        _ => return Err(TrapCause::IllegalInstruction { raw_i: instruction })
     }
 
-    let parsed_i = Instruction::new_mm_type(operation, im1, rs1, rs2, ms1, ms2, md);
+    let parsed_i = Instruction::new_mm_type(operation, im1, rs1, rs2, ms1, ms2, md, instruction);
 
-    return parsed_i;
+    return Ok(parsed_i);
 }
 
-pub fn decode(instruction: u32) -> Instruction {
+pub fn decode(instruction: u32) -> Result<Instruction, TrapCause> {
     let major_opcode = (instruction & OPCODE_MASK) as u8;
     match major_opcode {
         0b011_0011 => return parse_r_type(instruction),
@@ -353,6 +360,6 @@ pub fn decode(instruction: u32) -> Instruction {
         0b110_1111 => return parse_j_type(instruction),
         0b011_0111 | 0b001_0111 => return parse_u_type(instruction, major_opcode),
         0b010_1011 => return parse_mm_type(instruction),
-        _ => panic!("Unrecognized opcode {:#02b}", major_opcode) // fix more graceful exception
+        _ => Err(TrapCause::IllegalInstruction { raw_i: instruction })
     }
 }

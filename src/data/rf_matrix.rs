@@ -38,11 +38,11 @@ impl IndexMut<usize> for MatrixRF {
 
 impl fmt::Display for MatrixRF {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for i in 0..8 {
-            writeln!(f, "m{}: {:?}", i, self.rf[i][0])?;
-            writeln!(f, "    {:?}", self.rf[i][1])?;
-            writeln!(f, "    {:?}", self.rf[i][2])?;
-            writeln!(f, "    {:?}\n", self.rf[i][3])?;
+        for i in 0..4 {
+            writeln!(f, "m{}: {:<3?}        m{}: {:<3?}", i, self.rf[i][0], i+4, self.rf[i+4][0])?;
+            writeln!(f, "    {:<3?}            {:<3?}", self.rf[i][1], self.rf[i+4][1])?;
+            writeln!(f, "    {:<3?}            {:<3?}", self.rf[i][2], self.rf[i+4][2])?;
+            writeln!(f, "    {:<3?}            {:<3?}\n", self.rf[i][3], self.rf[i+4][3])?;
         }
         Ok(())
     }

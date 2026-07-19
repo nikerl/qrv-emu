@@ -10,14 +10,15 @@ use crate::{
         InstructionSet::*
     }, 
     exec::ExecutionUnit,
-    system::SystemState
+    system::SystemState,
+    trap::TrapCause
 };
 
 pub struct Branch;
 
 // Returns bool: branch taken (true), or not taken (false)
 impl ExecutionUnit for Branch {
-    fn execute(instr: Instruction, state: &mut SystemState) -> bool {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
         let regs = &mut state.srf;
 
         let offset = instr.im1;
@@ -28,42 +29,42 @@ impl ExecutionUnit for Branch {
             BEQ => {
                 if regs[rs1] == regs[rs2] {
                     regs[PC] = (regs[PC] as i32).wrapping_add(offset) as u32;
-                    return true;
+                    return Ok(true);
                 }
             }
             BNE => {
                 if regs[rs1] != regs[rs2] {
                     regs[PC] = (regs[PC] as i32).wrapping_add(offset) as u32;
-                    return true;
+                    return Ok(true);
                 }
             }
             BLT => {
                 if (regs[rs1] as i32) < (regs[rs2] as i32) {
                     regs[PC] = (regs[PC] as i32).wrapping_add(offset) as u32;
-                    return true;
+                    return Ok(true);
                 }
             }
             BGE => {
                 if (regs[rs1] as i32) >= (regs[rs2] as i32) {
                     regs[PC] = (regs[PC] as i32).wrapping_add(offset) as u32;
-                    return true;
+                    return Ok(true);
                 }
             }
             BLTU => {
                 if regs[rs1] < regs[rs2] {
                     regs[PC] = regs[PC].wrapping_add(offset as u32);
-                    return true;
+                    return Ok(true);
                 }
             }
             BGEU => {
                 if regs[rs1] >= regs[rs2] {
                     regs[PC] = regs[PC].wrapping_add(offset as u32);
-                    return true;
+                    return Ok(true);
                 }
             }
-            _ => println!("Unrecognized opcode")
+            _ => unreachable!("Decoder guarantees valid instructions")
         }
         
-        return false;
+        return Ok(false);
     }
 }
