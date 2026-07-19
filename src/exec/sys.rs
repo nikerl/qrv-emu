@@ -95,20 +95,20 @@ impl ExecutionUnit for Sys {
                         let str_ptr = regs[A1];
                         let str_len = regs[12];
 
-                        let mut str: String = "".to_string();
+                        let mut bytes: Vec<u8> = Vec::with_capacity(str_len as usize);
                         for i in 0..str_len {
-                            str = format!("{}{}", str, mem.load_byte((str_ptr + i) as usize)? as char)
+                            bytes.push(mem.load_byte((str_ptr + i) as usize)?);
                         }
 
                         if fd == 1 { // stdout
-                            print!("{}", str);
+                            io::stdout().write_all(&bytes).expect("Can't write to stdout");
                         }
                         else if fd == 2 { // stderr
-                            eprint!("{}", str);
+                            io::stderr().write_all(&bytes).expect("Can't write to stderr");
                         }
                         else { // file
                             let f = &mut file_table.files.get(&(fd as i32)).unwrap();
-                            f.write_all(&str.as_bytes()).expect("Can't write to fd");
+                            f.write_all(&bytes).expect("Can't write to fd");
                         }
                         regs[A0] = str_len;
                     }

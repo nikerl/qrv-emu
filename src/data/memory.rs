@@ -63,18 +63,18 @@ impl Memory {
     
     /// Loads a null-terminated string from an address in memory
     pub fn load_str(&self, vaddr: usize) -> Result<String, TrapCause> {
-        let mut result: String = "".to_string();
+        let mut bytes: Vec<u8> = Vec::new();
         let mut index: usize = 0;
         loop {
-            let c = self.load_byte(vaddr + index)? as char;
-            if c == '\0' {
+            let b = self.load_byte(vaddr + index)?;
+            if b == 0 {
                 break;
             }
-            result.push_str(&c.to_string());
+            bytes.push(b);
             index += 1;
         }
 
-        return Ok(result);
+        return Ok(String::from_utf8_lossy(&bytes).into_owned());
     }
     pub fn load_128b(&self, addr: usize) -> Result<[i32; 4], TrapCause> {
         let mut line: [i32; 4] = [0; 4];
