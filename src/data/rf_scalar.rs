@@ -37,12 +37,15 @@ pub enum RegNames {
 pub struct ScalarRF {
     rf: [u32; 32],
     pc: u32,
-    trap: u32, // trap queries modifying x0
+    /// Discard target for writes to x0. IndexMut must return &mut u32 without
+    /// a Result, so writes to x0 are redirected here instead of being applied.
+    /// Never read from directly, Index<x0> always returns a literal &0.
+    x0_sink: u32,
 }
 
 impl ScalarRF {
     pub fn new() -> Self {
-        return ScalarRF {rf: [0; 32], pc: 0, trap: 0};
+        return ScalarRF {rf: [0; 32], pc: 0, x0_sink: 0};
     }
     
     pub fn inc_pc(&mut self) {
@@ -67,7 +70,7 @@ impl Index<usize> for ScalarRF {
 impl IndexMut<usize> for ScalarRF {
     fn index_mut(&mut self, i: usize) -> &mut u32 {
         if i == ZERO as usize {
-            return &mut self.trap
+            return &mut self.x0_sink
         }
         else if i == PC as usize {
             return &mut self.pc;

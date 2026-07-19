@@ -41,7 +41,6 @@ impl ExecutionUnit for MatrixLSU {
                 for i in 0..4u32 {
                     mrf[md][i as usize] = mem.load_128b((base_addr + i*stride) as usize)?;
                 }
-                println!("{:?}", mrf[md]);
             }
             MSTW => {
                 for i in 0..4u32 {
