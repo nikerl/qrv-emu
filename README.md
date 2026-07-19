@@ -97,3 +97,8 @@ spmac: PASSED
 ====================
 Passed 52/52 tests
 ```
+
+## Performance
+The emulator has not been optimzed for performance yet, the numbers below are preliminary.
+- IPS: ~7M instr/s
+- Dhrystone: ~28500 dhrystones/s
