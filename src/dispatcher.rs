@@ -13,6 +13,7 @@ use crate::{
     }, 
     exec::{
         ExecutionUnit,
+        ExecResult,
         alu::Alu,
         branch::Branch,
         jump::Jump,
@@ -25,7 +26,7 @@ use crate::{
 
 
 /// Returns bool: branch taken (true), or not taken (false)
-pub fn dispatch(instruction: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
+pub fn dispatch(instruction: Instruction, state: &mut SystemState) -> Result<ExecResult, TrapCause> {
     match instruction.instr_type {
         InstrType::RType => {
             return Alu::execute(instruction, state);

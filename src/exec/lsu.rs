@@ -8,7 +8,10 @@ use crate::{
         Instruction, 
         InstructionSet::*
     }, 
-    exec::ExecutionUnit,
+    exec::{
+        ExecutionUnit,
+        ExecResult
+    },
     system::SystemState,
     trap::TrapCause
 };
@@ -16,7 +19,7 @@ use crate::{
 pub struct Lsu;
 
 impl ExecutionUnit for Lsu {
-    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<ExecResult, TrapCause> {
         let mem = &mut state.mem;
         let regs = &mut state.srf;
         
@@ -33,10 +36,13 @@ impl ExecutionUnit for Lsu {
             LHU => regs[rd] = mem.load_half(addr)? as u32,
             SB => mem.store_byte(addr, val as u8)?,
             SH => mem.store_half(addr, val as u16)?,
-            SW => mem.store_word(addr, val as u32)?,
+            SW => match mem.store_word(addr, val as u32)? {
+                ExecResult::Continue { .. } => {},
+                ExecResult::Exit { exit_status } => return Ok(ExecResult::Exit { exit_status })
+            }
             _ => unreachable!("Decoder guarantees valid instructions")
         }
 
-        return Ok(false);
+        return Ok(ExecResult::Continue { branch_taken: false });
     }
 }

@@ -20,7 +20,7 @@ pub enum TrapCause {
 }
 
 impl TrapCause {
-    pub fn trap_handler(self, state: &SystemState) {
+    pub fn trap_debug_print(self, state: &SystemState) {
         eprintln!("==============TRAP===============");
         eprintln!("Exception: {:?}", self);
         eprintln!("PC: 0x{:08x}", state.srf[PC]);
@@ -38,8 +38,6 @@ impl TrapCause {
         eprintln!("========SCALAR REGISTERS=========\n{}", state.srf);
 
         eprintln!("========MATRIX REGISTERS=========\n{}", state.mrf);
-
-        std::process::exit(1);
     }
 }
 

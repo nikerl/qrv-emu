@@ -8,7 +8,10 @@ use crate::{
         Instruction, 
         InstructionSet::*
     }, 
-    exec::ExecutionUnit,
+    exec::{
+        ExecutionUnit,
+        ExecResult
+    },
     system::SystemState,
     trap::TrapCause
 };
@@ -16,7 +19,7 @@ use crate::{
 pub struct MatrixMultiply;
 
 impl ExecutionUnit for MatrixMultiply {
-    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<ExecResult, TrapCause> {
         let mrf = &mut state.mrf;
 
         let ms1 = instr.ms1 as usize;
@@ -43,6 +46,6 @@ impl ExecutionUnit for MatrixMultiply {
             _ => unreachable!("Decoder guarantees valid instructions")
         }
 
-        return Ok(false);
+        return Ok(ExecResult::Continue { branch_taken: false });
     }
 }

@@ -9,7 +9,10 @@ use crate::{
         Instruction, 
         InstructionSet::*
     }, 
-    exec::ExecutionUnit,
+    exec::{
+        ExecutionUnit,
+        ExecResult
+    },
     system::SystemState,
     trap::TrapCause
 };
@@ -17,7 +20,7 @@ use crate::{
 pub struct Alu;
 
 impl ExecutionUnit for Alu {
-    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<ExecResult, TrapCause> {
         let regs = &mut state.srf;
 
         let im1 = instr.im1;
@@ -91,6 +94,6 @@ impl ExecutionUnit for Alu {
             _ => unreachable!("Decoder guarantees valid instructions")
         }
         
-        return Ok(false);
+        return Ok(ExecResult::Continue { branch_taken: false });
     }
 }

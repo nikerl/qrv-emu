@@ -8,7 +8,10 @@ use crate::{
         Instruction, 
         InstructionSet::*
     }, 
-    exec::ExecutionUnit,
+    exec::{
+        ExecutionUnit,
+        ExecResult
+    },
     system::SystemState,
     trap::TrapCause
 };
@@ -17,7 +20,7 @@ use crate::{
 pub struct MatrixLSU;
 
 impl ExecutionUnit for MatrixLSU {
-    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<ExecResult, TrapCause> {
         let mem = &mut state.mem;
         let srf = &mut state.srf;
         let mrf = &mut state.mrf;
@@ -66,6 +69,6 @@ impl ExecutionUnit for MatrixLSU {
             _ => unreachable!("Decoder guarantees valid instructions")
         }
         
-        return Ok(false);
+        return Ok(ExecResult::Continue { branch_taken: false });
     }
 }

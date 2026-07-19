@@ -9,24 +9,26 @@ use std::{
         OpenOptions
     }, io::{
         self, Read, Write
-    }, process::exit, time::SystemTime
+    }, 
+    time::SystemTime
 };
 
 use crate::{
-    data::rf_scalar::RegNames::*,
+    data::rf_scalar::RegNames::*, 
+    exec::{
+        ExecutionUnit,
+        ExecResult
+    }, 
     instruction_set::{
         Instruction, 
         InstructionSet::*
-    }, 
-    exec::ExecutionUnit,
-    system::SystemState,
-    trap::TrapCause
+    }, system::SystemState, trap::TrapCause
 };
 
 pub struct Sys;
 
 impl ExecutionUnit for Sys {
-    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<ExecResult, TrapCause> {
         let mem = &mut state.mem;
         let regs = &mut state.srf;
         let file_table = &mut state.file_table;
@@ -52,7 +54,10 @@ impl ExecutionUnit for Sys {
                                     0 => SeekFrom::Start(offset as u64),   // SEEK_SET
                                     1 => SeekFrom::Current(offset as i64), // SEEK_CUR
                                     2 => SeekFrom::End(offset as i64),     // SEEK_END
-                                    _ => { regs[A0] = -1i32 as u32; return Ok(false); }
+                                    _ => { 
+                                        regs[A0] = -1i32 as u32; 
+                                        return Ok(ExecResult::Continue { branch_taken: false }); 
+                                    }
                                 };
                                 match file.seek(seek_from) {
                                     Ok(pos) => regs[A0] = pos as u32,
@@ -75,7 +80,10 @@ impl ExecutionUnit for Sys {
                         else {
                             match file_table.files.get_mut(&(fd as i32)) {
                                 Some(file) => file.read(&mut buf),
-                                None => { regs[A0] = -1i32 as u32; return Ok(false); } // adjust to your actual control flow
+                                None => {
+                                    regs[A0] = -1i32 as u32;
+                                    return Ok(ExecResult::Continue { branch_taken: false });
+                                } 
                             }
                         };
                         
@@ -124,8 +132,7 @@ impl ExecutionUnit for Sys {
                     }
 
                     93 => { // program exit
-                        println!("Exit");
-                        exit(regs[A0] as i32);
+                        return Ok(ExecResult::Exit { exit_status: regs[A0] as i32 })
                     }
 
                     214 => { // brk, increase heap limit if possible
@@ -185,10 +192,10 @@ impl ExecutionUnit for Sys {
                 } 
             }
             EBREAK => println!("EBREAK hit at pc {:#x}", regs[PC]),
-            FENCE => return Ok(false), // not relevant 
+            FENCE => return Ok(ExecResult::Continue { branch_taken: false }), // not relevant 
             _ => unreachable!("Decoder guarantees valid instructions")
         }
 
-        return Ok(false);
+        return Ok(ExecResult::Continue { branch_taken: false });
     }
 }

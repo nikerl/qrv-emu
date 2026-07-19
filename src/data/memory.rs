@@ -7,11 +7,12 @@ use std::{
     ops::{
         Index, 
         IndexMut
-    }, process::exit
+    }, 
 };
 
 use crate::{
     data::memory::AccessType::*, 
+    exec::ExecResult, 
     trap::TrapCause
 };
 
@@ -38,15 +39,17 @@ impl Memory {
         return Memory { mem: vec![0; MEM_SIZE as usize], program_break: 0, base_addr: 0 }
     }
 
-    fn to_host(&self, word: u32) {
+    fn to_host(&self, word: u32) -> Result<ExecResult, TrapCause> {
         if word == RVMODEL_HALT_PASS {
             println!("Test PASSED\nExit");
-            exit(0);
+            return Ok(ExecResult::Exit { exit_status: 0 });
         }
         else if word == RVMODEL_HALT_FAIL {
             println!("Test FAILED\nExit");
-            exit(1);
+            return Ok(ExecResult::Exit { exit_status: 1 });
         }
+
+        return Ok(ExecResult::Continue { branch_taken: false });
     }
     
     pub fn translate_vaddr(&self, vaddr: usize, atype: AccessType) -> Result<usize, TrapCause> {
@@ -100,14 +103,14 @@ impl Memory {
         let addr = self.translate_vaddr(vaddr, LOAD)?;
         return Ok((self.mem[addr + 3] as u32) << 24 | (self.mem[addr + 2] as u32) << 16 | (self.mem[addr + 1] as u32) << 8 | self.mem[addr] as u32);
     }
-    pub fn store_word(&mut self, vaddr: usize, word: u32) -> Result<(), TrapCause> {
+    pub fn store_word(&mut self, vaddr: usize, word: u32) -> Result<ExecResult, TrapCause> {
         if vaddr == TOHOST_ADDR { // Intercept writes to host
-            self.to_host(word);
-            return Ok(());
+            self.to_host(word)?;
+            return Ok(ExecResult::Continue { branch_taken: false });
         }
         else if vaddr == IO_WRITE_ADDR { // Intercepts IO writes
             print!("{}", word as u8 as char);
-            return Ok(());
+            return Ok(ExecResult::Continue { branch_taken: false });
         }
 
         if (vaddr % 4) != 0 {
@@ -120,7 +123,7 @@ impl Memory {
         self.mem[addr + 2] = (word >> 16) as u8;
         self.mem[addr + 3] = (word >> 24) as u8;
 
-        return Ok(());
+        return Ok(ExecResult::Continue { branch_taken: false });
     }
     pub fn load_half(&self, vaddr: usize) -> Result<u16, TrapCause> {
         if (vaddr % 2) != 0 {

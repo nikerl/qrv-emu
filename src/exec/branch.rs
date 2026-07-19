@@ -9,7 +9,10 @@ use crate::{
         Instruction, 
         InstructionSet::*
     }, 
-    exec::ExecutionUnit,
+    exec::{
+        ExecutionUnit,
+        ExecResult
+    },
     system::SystemState,
     trap::TrapCause
 };
@@ -18,7 +21,7 @@ pub struct Branch;
 
 // Returns bool: branch taken (true), or not taken (false)
 impl ExecutionUnit for Branch {
-    fn execute(instr: Instruction, state: &mut SystemState) -> Result<bool, TrapCause> {
+    fn execute(instr: Instruction, state: &mut SystemState) -> Result<ExecResult, TrapCause> {
         let regs = &mut state.srf;
 
         let offset = instr.im1;
@@ -29,42 +32,42 @@ impl ExecutionUnit for Branch {
             BEQ => {
                 if regs[rs1] == regs[rs2] {
                     regs[PC] = (regs[PC] as i32).wrapping_add(offset) as u32;
-                    return Ok(true);
+                    return Ok(ExecResult::Continue { branch_taken: true });
                 }
             }
             BNE => {
                 if regs[rs1] != regs[rs2] {
                     regs[PC] = (regs[PC] as i32).wrapping_add(offset) as u32;
-                    return Ok(true);
+                    return Ok(ExecResult::Continue { branch_taken: true });
                 }
             }
             BLT => {
                 if (regs[rs1] as i32) < (regs[rs2] as i32) {
                     regs[PC] = (regs[PC] as i32).wrapping_add(offset) as u32;
-                    return Ok(true);
+                    return Ok(ExecResult::Continue { branch_taken: true });
                 }
             }
             BGE => {
                 if (regs[rs1] as i32) >= (regs[rs2] as i32) {
                     regs[PC] = (regs[PC] as i32).wrapping_add(offset) as u32;
-                    return Ok(true);
+                    return Ok(ExecResult::Continue { branch_taken: true });
                 }
             }
             BLTU => {
                 if regs[rs1] < regs[rs2] {
                     regs[PC] = regs[PC].wrapping_add(offset as u32);
-                    return Ok(true);
+                    return Ok(ExecResult::Continue { branch_taken: true });
                 }
             }
             BGEU => {
                 if regs[rs1] >= regs[rs2] {
                     regs[PC] = regs[PC].wrapping_add(offset as u32);
-                    return Ok(true);
+                    return Ok(ExecResult::Continue { branch_taken: true });
                 }
             }
             _ => unreachable!("Decoder guarantees valid instructions")
         }
         
-        return Ok(false);
+        return Ok(ExecResult::Continue { branch_taken: false });
     }
 }
